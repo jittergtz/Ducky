@@ -10,21 +10,33 @@ const file = () => path.join(app.getPath("userData"), "chatgpt-subscription.bin"
 let refreshPromise;
 let signInPromise;
 
-function load() {
-  if (!fs.existsSync(file())) return null;
+function requireSecureStorage() {
   if (
     !safeStorage.isEncryptionAvailable() ||
     (process.platform === "linux" && safeStorage.getSelectedStorageBackend?.() === "basic_text")
   )
     throw new Error("Secure credential storage is unavailable.");
-  return JSON.parse(safeStorage.decryptString(fs.readFileSync(file())));
 }
+
+function load() {
+  let encrypted;
+  try {
+    encrypted = fs.readFileSync(file());
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+  requireSecureStorage();
+  try {
+    return JSON.parse(safeStorage.decryptString(encrypted));
+  } catch {
+    // Keep the old record until a fresh sign-in succeeds. The keychain may recover in the meantime.
+    return null;
+  }
+}
+
 function save(data) {
-  if (
-    !safeStorage.isEncryptionAvailable() ||
-    (process.platform === "linux" && safeStorage.getSelectedStorageBackend?.() === "basic_text")
-  )
-    throw new Error("Secure credential storage is unavailable.");
+  requireSecureStorage();
   const temporary = `${file()}.tmp`;
   fs.writeFileSync(temporary, safeStorage.encryptString(JSON.stringify(data)), { mode: 0o600 });
   fs.renameSync(temporary, file());
@@ -81,11 +93,7 @@ async function identity(token, clientId, nonce) {
 async function signIn() {
   if (signInPromise) return signInPromise;
   signInPromise = (async () => {
-    if (
-      !safeStorage.isEncryptionAvailable() ||
-      (process.platform === "linux" && safeStorage.getSelectedStorageBackend?.() === "basic_text")
-    )
-      throw new Error("Secure credential storage is unavailable.");
+    requireSecureStorage();
     const previous = load();
     const hostId = previous?.hostId || `urn:uuid:${crypto.randomUUID()}`;
     const state = crypto.randomBytes(32).toString("base64url");
