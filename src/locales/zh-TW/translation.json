@@ -1,4 +1,9 @@
 {
+  "grammarCorrection": {
+    "working": "修正中…",
+    "permission": "請在系統設定 → 隱私權與安全性 → 輔助使用中允許 Ducky。點擊開啟設定。",
+    "permissionCopy": "Ducky 需要輔助使用權限才能取代文字。點擊複製修正內容並開啟設定。"
+  },
   "appIcon": {
     "title": "應用程式圖示",
     "classic": "經典",

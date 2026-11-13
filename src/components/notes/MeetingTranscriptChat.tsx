@@ -14,17 +14,19 @@ import {
 const BUBBLE_STYLES = {
   mic: {
     align: "justify-start",
-    radius: "rounded-bl-sm",
-    bg: "bg-primary/60 text-primary-foreground/80",
-    cursor: "bg-primary-foreground/60",
+    bg: "bg-foreground/[0.035] dark:bg-white/[0.055] text-foreground/90",
+    cursor: "bg-foreground/50",
   },
   system: {
     align: "justify-end",
-    radius: "rounded-br-sm",
-    bg: "bg-surface-2/70 border border-border/20 text-foreground/80",
+    bg: "bg-surface-1 text-foreground/90",
     cursor: "bg-foreground/40",
   },
 } as const;
+
+const BUBBLE_CONTENT =
+  "rounded-[18px] px-4 py-2.5 text-[13px] leading-[1.75] whitespace-pre-wrap break-words [overflow-wrap:anywhere]";
+const BUBBLE_WIDTH = "relative max-w-[92%] text-[13px] sm:max-w-[min(88%,68ch)]";
 
 const SPEAKER_COLORS = [
   "text-neutral-400",
@@ -35,17 +37,6 @@ const SPEAKER_COLORS = [
   "text-neutral-400",
   "text-neutral-400",
   "text-neutral-400",
-];
-
-const SPEAKER_BORDER_COLORS = [
-  "border-l-neutral-400/50",
-  "border-l-neutral-400/50",
-  "border-l-neutral-400/50",
-  "border-l-neutral-400/50",
-  "border-l-neutral-400/50",
-  "border-l-neutral-400/50",
-  "border-l-neutral-400/50",
-  "border-l-neutral-400/50",
 ];
 
 const STICKY_SCROLL_THRESHOLD_PX = 80;
@@ -101,26 +92,19 @@ function PartialBubble({
       className={cn("flex", s.align)}
       style={{ animation: "agent-message-in 150ms ease-out both" }}
     >
-      <div className="max-w-[80%] flex flex-col">
-        {speakerLabel && (
-          <div className="mb-0.5 flex items-center gap-1 px-1">
-            <span className="text-[11px] font-medium text-muted-foreground/70">{speakerLabel}</span>
-            {speakerState === "provisional" && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground/40">
-                <Sparkles size={9} />
-                {getSpeakerStateLabel("provisional", t)}
-              </span>
-            )}
-          </div>
-        )}
-        <div
-          className={cn(
-            "px-3 py-1.5 rounded-lg",
-            s.radius,
-            s.bg,
-            "text-[13px] leading-relaxed italic"
+      <div className={cn(BUBBLE_WIDTH, "flex flex-col")}>
+        <div className="mb-1.5 flex items-center gap-1.5 px-1">
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {speakerLabel || t(source === "mic" ? "notes.speaker.you" : "notes.speaker.them")}
+          </span>
+          {speakerState === "provisional" && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground/40">
+              <Sparkles size={9} />
+              {getSpeakerStateLabel("provisional", t)}
+            </span>
           )}
-        >
+        </div>
+        <div className={cn(BUBBLE_CONTENT, s.bg, "text-foreground/65")}>
           {text}
           <span
             className={cn("inline-block w-[2px] h-[13px] align-middle ml-0.5", s.cursor)}
@@ -443,22 +427,25 @@ function SpeakerLabel({
     (isOriginallyYou
       ? t("notes.speaker.you")
       : t("notes.speaker.label", { n: getSpeakerNumber(speakerId) }));
-  const isUnmapped = !mappedName && !segment.speakerName;
+  const isUnmapped = !mappedName && !segment.speakerName && !isOriginallyYou;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "inline-flex items-center text-[11px] font-medium mb-0.5 px-1.5 py-0.5 rounded-md outline-none cursor-pointer",
-            "border border-border/60 dark:border-white/20",
-            "hover:bg-foreground/5 hover:border-border/90 dark:hover:border-white/30",
+            "inline-flex items-center gap-1.5 text-[11px] font-medium px-1.5 py-1 rounded-md outline-none cursor-pointer",
+            "border border-transparent hover:bg-foreground/5 hover:border-border/70",
             "transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-ring",
             SPEAKER_COLORS[colorIdx],
-            isUnmapped && "border-dashed",
+            isUnmapped && "border-dashed border-border/60",
             speakerState === "provisional" && "italic"
           )}
         >
+          <span
+            className="size-1.5 shrink-0 rounded-full bg-current opacity-60"
+            aria-hidden="true"
+          />
           {displayLabel}
         </button>
       </PopoverTrigger>
@@ -496,8 +483,8 @@ function SelectCheckbox({
       className={cn(
         "w-4 h-4 rounded-full border flex items-center justify-center transition-all cursor-pointer",
         isSelected
-          ? "border-primary bg-primary text-primary-foreground opacity-100"
-          : "border-border/60 bg-background/80 opacity-0 group-hover:opacity-100 hover:border-foreground/50",
+          ? "border-foreground bg-foreground text-background opacity-100"
+          : "border-border bg-background opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:border-foreground/50",
         className
       )}
     >
@@ -681,10 +668,11 @@ export function MeetingTranscriptChat({
   };
 
   const others = Math.max(0, sessionExpectedCount - 1);
+  const showSpeakerHint = (isRecording || isDiarizing) && !hintDismissed;
 
   return (
     <div className="h-full relative">
-      {(isRecording || isDiarizing) && !hintDismissed && (
+      {showSpeakerHint && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md border border-border bg-background/95 backdrop-blur shadow-sm text-xs text-foreground">
           {isDiarizing ? (
             <Loader2 size={12} className="animate-spin text-muted-foreground" />
@@ -751,7 +739,10 @@ export function MeetingTranscriptChat({
       )}
       <div
         ref={scrollRef}
-        className="h-full overflow-y-auto px-4 pt-3 pb-24 flex flex-col gap-1.5 agent-chat-scroll"
+        className={cn(
+          "h-full overflow-y-auto px-5 pt-5 pb-24 flex flex-col gap-2.5 agent-chat-scroll sm:px-6",
+          showSpeakerHint && "pt-14"
+        )}
       >
         {segments.map((segment, i) => {
           const selfSide = isSelfSide(segment);
@@ -779,8 +770,8 @@ export function MeetingTranscriptChat({
             !matchedProfile.email &&
             !!onAttachSpeakerEmail;
 
-          const labelElement = hasSpeaker && (
-            <div className="flex items-center gap-1">
+          const labelElement = hasSpeaker ? (
+            <div className="mb-1.5 flex items-center gap-1">
               <SpeakerLabel
                 speakerId={segment.speaker!}
                 segment={segment}
@@ -802,6 +793,11 @@ export function MeetingTranscriptChat({
                 />
               )}
             </div>
+          ) : (
+            <span className="mb-1.5 inline-flex items-center gap-1.5 px-1 text-[11px] font-medium text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-current opacity-60" aria-hidden="true" />
+              {t(selfSide ? "notes.speaker.you" : "notes.speaker.them")}
+            </span>
           );
 
           return (
@@ -810,7 +806,7 @@ export function MeetingTranscriptChat({
               className={cn(
                 "group flex flex-col",
                 selfSide ? "items-start" : "items-end",
-                !sameSpeaker && i > 0 && "mt-2",
+                !sameSpeaker && i > 0 && "mt-4",
                 selectable && (selfSide ? "pl-6" : "pr-6")
               )}
               style={{ animation: "agent-message-in 200ms ease-out both" }}
@@ -820,28 +816,20 @@ export function MeetingTranscriptChat({
                 <div
                   className={cn(
                     "grid grid-rows-[0fr] opacity-0 pointer-events-none transition-[grid-template-rows,opacity] duration-150 ease-out",
-                    "group-hover:grid-rows-[1fr] group-hover:opacity-100 group-hover:pointer-events-auto"
+                    "group-hover:grid-rows-[1fr] group-hover:opacity-100 group-hover:pointer-events-auto",
+                    "group-focus-within:grid-rows-[1fr] group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
                   )}
                 >
                   <div className="overflow-hidden">{labelElement}</div>
                 </div>
               )}
-              <div className="relative max-w-[80%]">
+              <div className={BUBBLE_WIDTH}>
                 <div
                   className={cn(
-                    "px-3 py-1.5 cursor-default transition-colors",
-                    "text-[13px] leading-relaxed",
-                    selfSide
-                      ? cn(
-                          "bg-primary/90 text-primary-foreground",
-                          sameSpeaker ? "rounded-lg rounded-tl-sm" : "rounded-lg rounded-bl-sm"
-                        )
-                      : cn(
-                          "bg-surface-2 border border-border/30 text-foreground",
-                          sameSpeaker ? "rounded-lg rounded-tr-sm" : "rounded-lg rounded-br-sm",
-                          isSystemSpeaker && cn("border-l-2", SPEAKER_BORDER_COLORS[colorIdx])
-                        ),
-                    isSelected && "ring-2 ring-primary/60"
+                    BUBBLE_CONTENT,
+                    "cursor-default transition-colors",
+                    selfSide ? BUBBLE_STYLES.mic.bg : BUBBLE_STYLES.system.bg,
+                    isSelected && "ring-2 ring-foreground/30"
                   )}
                 >
                   {segment.text}
@@ -850,7 +838,7 @@ export function MeetingTranscriptChat({
                   <SelectCheckbox
                     isSelected={isSelected}
                     onToggle={() => onToggleSelect?.(segment.id)}
-                    className={cn("absolute top-1.5", selfSide ? "-left-6" : "-right-6")}
+                    className={cn("absolute top-3", selfSide ? "-left-6" : "-right-6")}
                   />
                 )}
               </div>

@@ -72,6 +72,7 @@
     }
   },
   "grammarCorrection": {
+    "working": "Working...",
     "title": "Grammar Correction",
     "description": "Correct selected text or the entire focused field. Ducky sends that text to OpenAI using your ChatGPT plan.",
     "shortcut": "Global shortcut",
@@ -89,7 +90,8 @@
     "chooseModel": "Choose an available ChatGPT model in Grammar Correction settings.",
     "connect": "Connect your ChatGPT account on the Provider page.",
     "helperUnavailable": "Ducky could not access the focused text field.",
-    "permission": "Allow Ducky in System Settings → Privacy & Security → Accessibility.",
+    "permission": "Allow Ducky in System Settings → Privacy & Security → Accessibility. Click to open settings.",
+    "permissionCopy": "Ducky needs Accessibility access to replace text. Click to copy the correction and open settings.",
     "unsupported": "Focus an editable text field that Ducky can read.",
     "empty": "There’s no text to correct in the focused field.",
     "tooLong": "Select a shorter passage and try the shortcut again.",

@@ -52,6 +52,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onToggleTranslation: registerListener("toggle-translation", (callback) => () => callback()),
   onStartDictation: registerListener("start-dictation", (callback) => () => callback()),
   onStopDictation: registerListener("stop-dictation", (callback) => () => callback()),
+  getGrammarCorrectionState: () => ipcRenderer.invoke("get-grammar-correction-state"),
+  onGrammarCorrectionState: registerListener(
+    "grammar-correction-state",
+    (callback) => (_event, working) => callback(working)
+  ),
 
   // Database functions
   saveTranscription: (text, rawText, options) =>
@@ -804,7 +809,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   updateTranslationHotkey: (hotkey) => ipcRenderer.invoke("update-translation-hotkey", hotkey),
   getTranslationKey: () => ipcRenderer.invoke("get-translation-key"),
   getGrammarCorrectionSettings: () => ipcRenderer.invoke("get-grammar-correction-settings"),
-  setGrammarCorrectionHotkey: (hotkey) => ipcRenderer.invoke("set-grammar-correction-hotkey", hotkey),
+  setGrammarCorrectionHotkey: (hotkey) =>
+    ipcRenderer.invoke("set-grammar-correction-hotkey", hotkey),
   setGrammarCorrectionModel: (model) => ipcRenderer.invoke("set-grammar-correction-model", model),
   getAgentKey: () => ipcRenderer.invoke("get-agent-key"),
   saveAgentKey: (key) => ipcRenderer.invoke("save-agent-key", key),

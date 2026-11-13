@@ -1,4 +1,9 @@
 {
+  "grammarCorrection": {
+    "working": "修正中…",
+    "permission": "请在系统设置 → 隐私与安全性 → 辅助功能中允许 Ducky。点击打开设置。",
+    "permissionCopy": "Ducky 需要辅助功能权限才能替换文本。点击复制修正内容并打开设置。"
+  },
   "appIcon": {
     "title": "应用图标",
     "classic": "经典",

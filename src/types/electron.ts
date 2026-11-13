@@ -1623,7 +1623,11 @@ declare global {
         model: string;
         registrationError: string;
       }>;
-      setGrammarCorrectionHotkey: (hotkey: string) => Promise<{ success: boolean; message?: string }>;
+      getGrammarCorrectionState: () => Promise<boolean>;
+      onGrammarCorrectionState: (callback: (working: boolean) => void) => () => void;
+      setGrammarCorrectionHotkey: (
+        hotkey: string
+      ) => Promise<{ success: boolean; message?: string }>;
       setGrammarCorrectionModel: (model: string) => Promise<{ success: boolean; message?: string }>;
       getAgentKey?: () => Promise<string>;
       saveAgentKey?: (key: string) => Promise<void>;

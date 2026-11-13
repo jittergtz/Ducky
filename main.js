@@ -866,7 +866,8 @@ async function startApp() {
   const restoreGrammarCorrectionHotkey = require("./src/helpers/grammarCorrection")(
     hotkeyManager,
     textEditMonitor,
-    (entry) => ipcHandlers.recordGrammarCorrection(entry)
+    (entry) => ipcHandlers.recordGrammarCorrection(entry),
+    (working) => windowManager.setGrammarCorrectionWorking(working)
   );
   await environmentManager.init();
   registerSidecars();

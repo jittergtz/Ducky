@@ -1,4 +1,9 @@
 {
+  "grammarCorrection": {
+    "working": "Al lavoro…",
+    "permission": "Consenti Ducky in Impostazioni di Sistema → Privacy e sicurezza → Accessibilità. Fai clic per aprire le impostazioni.",
+    "permissionCopy": "Ducky necessita dell’accesso ad Accessibilità per sostituire il testo. Fai clic per copiare la correzione e aprire le impostazioni."
+  },
   "appIcon": {
     "title": "Icona dell’app",
     "classic": "Classica",

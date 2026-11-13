@@ -59,7 +59,6 @@ private struct GrammarField {
     let reportedSelection: CFRange?
     let textToCorrect: String
     let singleLine: Bool
-    let canSetValue: Bool
 }
 
 private func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
@@ -173,8 +172,7 @@ private func grammarField(_ focused: AXUIElement, pid: pid_t) -> GrammarField? {
         textToCorrect: input,
         singleLine: role == kAXTextFieldRole && CFEqual(focused, element)
             && input.rangeOfCharacter(from: .newlines) == nil
-            && value?.rangeOfCharacter(from: .newlines) == nil,
-        canSetValue: canSetValue
+            && value?.rangeOfCharacter(from: .newlines) == nil
     )
 }
 
@@ -281,10 +279,107 @@ private func canReplaceRichText(_ element: AXUIElement, range: CFRange, removed:
         && attributes[NSAttributedString.Key("AXLink")] == nil
 }
 
+// Use the editor's paste action rather than AXSelectedText's setter. Some web
+// editors accept that setter but insert at the caret instead of replacing text.
+// The caller must verify both the range and its selected text before we post.
+private func pasteGrammarText(_ text: String, stillSelected: () -> Bool) -> String {
+    guard AXIsProcessTrusted(), CGPreflightPostEventAccess() else { return "permission" }
+    let modifiers: CGEventFlags = [.maskCommand, .maskControl, .maskAlternate, .maskShift, .maskSecondaryFn]
+    for _ in 0..<60 {
+        if CGEventSource.flagsState(.combinedSessionState).intersection(modifiers).isEmpty { break }
+        Thread.sleep(forTimeInterval: 0.025)
+    }
+    guard CGEventSource.flagsState(.combinedSessionState).intersection(modifiers).isEmpty else {
+        return "preview"
+    }
+    let key = CGKeyCode(text.isEmpty ? kVK_Delete : kVK_ANSI_V)
+    guard let down = CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: true),
+          let up = CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: false) else {
+        return "preview"
+    }
+    down.flags = text.isEmpty ? [] : .maskCommand
+    up.flags = down.flags
+
+    let board = NSPasteboard.general
+    let saved = board.pasteboardItems?.map { item -> NSPasteboardItem in
+        let copy = NSPasteboardItem()
+        for type in item.types {
+            if let data = item.data(forType: type) { copy.setData(data, forType: type) }
+        }
+        return copy
+    } ?? []
+    var ownedChange: Int?
+    defer {
+        // Do not overwrite something the user copied while the paste was pending.
+        if let ownedChange = ownedChange, board.changeCount == ownedChange {
+            board.clearContents()
+            if !saved.isEmpty { board.writeObjects(saved) }
+        }
+    }
+    if !text.isEmpty {
+        board.clearContents()
+        ownedChange = board.changeCount
+        guard board.setString(text, forType: .string) else { return "preview" }
+        ownedChange = board.changeCount
+    }
+    // Recheck after waiting for shortcut release and preparing the clipboard.
+    guard stillSelected() else { return "changed" }
+    down.post(tap: .cgSessionEventTap)
+    usleep(8000)
+    up.post(tap: .cgSessionEventTap)
+    // Editors consume paste asynchronously; keep every original clipboard format
+    // alive until the paste has had time to read our temporary plain text.
+    Thread.sleep(forTimeInterval: 0.6)
+    return "posted"
+}
+
+private func replaceGrammarSelection(
+    _ before: GrammarField, range: CFRange, removed: String, inserted: String,
+    currentField: () -> GrammarField?
+) -> String {
+    func stillSelected() -> Bool {
+        guard range.length > 0, let latest = currentField(), sameTextField(before, latest),
+              sameRange(latest.reportedSelection, range),
+              let selected = attribute(latest.element, kAXSelectedTextAttribute) as? String else {
+            return false
+        }
+        return selected.utf16.elementsEqual(removed.utf16)
+    }
+    guard stillSelected() else { return "changed" }
+    let result = pasteGrammarText(inserted, stillSelected: stillSelected)
+    guard result == "posted" else { return result }
+
+    let expected: String?
+    if range.location >= 0, range.location <= before.text.utf16.count,
+       range.length <= before.text.utf16.count - range.location,
+       (before.text as NSString).substring(with: NSRange(location: range.location, length: range.length))
+           .utf16.elementsEqual(removed.utf16) {
+        expected = (before.text as NSString).replacingCharacters(
+            in: NSRange(location: range.location, length: range.length), with: inserted
+        )
+    } else {
+        expected = nil
+    }
+    for attempt in 0..<20 {
+        if attempt > 0 { Thread.sleep(forTimeInterval: 0.025) }
+        guard let actual = currentField() else { continue }
+        if let expected = expected {
+            if actual.text.utf16.elementsEqual(expected.utf16) { return "applied" }
+        } else if actual.text.utf16.count == before.text.utf16.count - removed.utf16.count + inserted.utf16.count,
+                  let value = rangeAttribute(actual.element, kAXStringForRangeParameterizedAttribute,
+                      range: CFRange(location: range.location, length: inserted.utf16.count)) as? String,
+                  value.utf16.elementsEqual(inserted.utf16) {
+            return "applied"
+        }
+    }
+    // A posted paste may have landed even if AX has not caught up. Never retry it
+    // or issue Delete/Undo here: that can duplicate text or erase the user's edit.
+    return "partial"
+}
+
 private func replaceRichText(
     _ original: GrammarField, correction: String, currentField: () -> GrammarField?
 ) -> String {
-    guard isSettable(original.element, kAXSelectedTextAttribute) else { return "preview" }
     guard let current = currentField(), sameTextField(original, current),
           sameRange(original.reportedSelection, current.reportedSelection),
           original.textToCorrect.utf16.elementsEqual(current.textToCorrect.utf16) else {
@@ -308,17 +403,8 @@ private func replaceRichText(
               latest.textToCorrect.utf16.elementsEqual(original.textToCorrect.utf16) else {
             return "preview"
         }
-        let result = AXUIElementSetAttributeValue(
-            latest.element, kAXSelectedTextAttribute as CFString, correction as CFString
-        )
-        let insertedRange = CFRange(location: range.location, length: correction.utf16.count)
-        for attempt in 0..<12 where result == .success {
-            if attempt > 0 { Thread.sleep(forTimeInterval: 0.025) }
-            if let inserted = rangeAttribute(latest.element, kAXStringForRangeParameterizedAttribute,
-                                             range: insertedRange) as? String,
-               inserted.utf16.elementsEqual(correction.utf16) { return "applied" }
-        }
-        return result == .success ? "partial" : "preview"
+        return replaceGrammarSelection(latest, range: range, removed: original.textToCorrect,
+                                       inserted: correction, currentField: currentField)
     }
 
     guard let edits = grammarParagraphEdits(from: original.textToCorrect, to: correction),
@@ -359,34 +445,65 @@ private func replaceRichText(
             }
         }
         guard let target = target else { return failure }
-        let result = AXUIElementSetAttributeValue(
-            target.element, kAXSelectedTextAttribute as CFString, change.inserted as CFString
-        )
-        let expected = (before.text as NSString).replacingCharacters(
-            in: NSRange(location: range.location, length: range.length), with: change.inserted
-        )
-        var applied: GrammarField?
-        for attempt in 0..<12 where result == .success {
-            if attempt > 0 { Thread.sleep(forTimeInterval: 0.025) }
-            if let actual = currentField(), CFEqual(target.element, actual.element),
-               actual.text.utf16.elementsEqual(expected.utf16) {
-                applied = actual
-                break
-            }
-        }
-        guard let updated = applied else {
-            if let latest = currentField(), sameField(before, latest, selection: range) {
+        let result = replaceGrammarSelection(target, range: range, removed: change.removed,
+                                             inserted: change.inserted, currentField: currentField)
+        guard result == "applied", let updated = currentField() else {
+            // Restore our temporary selection only if no text changed.
+            if result != "partial", let latest = currentField(), sameField(before, latest, selection: range) {
                 let previousSelection = before.selection
                     ?? CFRange(location: range.location + range.length, length: 0)
                 _ = select(previousSelection, in: latest.element)
-                return failure
             }
-            return "partial"
+            return failure == "partial" ? failure : result
         }
         before = updated
         failure = "partial"
     }
     return "applied"
+}
+
+private func replacePlainText(
+    _ original: GrammarField, correction: String, currentField: () -> GrammarField?
+) -> String {
+    guard let selection = original.selection else {
+        return "preview"
+    }
+    guard let current = currentField(), sameField(original, current, selection: selection) else {
+        return "changed"
+    }
+    guard current.singleLine, correction.rangeOfCharacter(from: .newlines) == nil else {
+        return "preview"
+    }
+    let range = selection.length > 0
+        ? selection
+        : CFRange(location: 0, length: original.text.utf16.count)
+
+    guard let latest = currentField(), sameField(original, latest, selection: selection) else {
+        return "changed"
+    }
+    if !sameRange(selection, range), !select(range, in: latest.element) {
+        return "preview"
+    }
+    // Selection writes can be asynchronous in browser inputs. Wait for the exact
+    // range instead of pasting at a still-collapsed caret.
+    var target: GrammarField?
+    for attempt in 0..<12 {
+        if attempt > 0 { Thread.sleep(forTimeInterval: 0.025) }
+        guard let selected = currentField(), sameTextField(original, selected) else { break }
+        if sameField(original, selected, selection: range) { target = selected; break }
+        if !sameRange(selected.reportedSelection, selection) { break }
+    }
+    guard let target = target else { return "changed" }
+    let removed = (original.text as NSString).substring(
+        with: NSRange(location: range.location, length: range.length)
+    )
+    let result = replaceGrammarSelection(target, range: range, removed: removed,
+                                         inserted: correction, currentField: currentField)
+    if result != "applied", result != "partial", let latest = currentField(),
+       sameField(original, latest, selection: range) {
+        _ = select(selection, in: latest.element)
+    }
+    return result
 }
 
 private func runGrammarCorrection() {
@@ -437,67 +554,7 @@ private func runGrammarCorrection() {
         writeOutput(replaceRichText(original, correction: correction, currentField: currentField))
         return
     }
-    guard let selection = original.selection else {
-        writeOutput("preview")
-        return
-    }
-    guard let current = currentField(), sameField(original, current, selection: selection) else {
-        writeOutput("changed")
-        return
-    }
-    guard current.singleLine, correction.rangeOfCharacter(from: .newlines) == nil else {
-        writeOutput("preview")
-        return
-    }
-    let range = selection.length > 0
-        ? selection
-        : CFRange(location: 0, length: original.text.utf16.count)
-
-    if !isSettable(current.element, kAXSelectedTextAttribute) {
-        // Some web inputs expose a value setter but no selected-text setter.
-        // Only use it on leaf text fields so embedded markup is preserved.
-        guard current.canSetValue,
-              let children = attribute(current.element, kAXChildrenAttribute) as? [Any],
-              children.isEmpty else {
-            writeOutput("preview")
-            return
-        }
-        guard let latest = currentField(), latest.singleLine, latest.canSetValue,
-              sameField(original, latest, selection: selection) else {
-            writeOutput("changed")
-            return
-        }
-        let value = (latest.text as NSString).replacingCharacters(
-            in: NSRange(location: range.location, length: range.length), with: correction
-        )
-        let result = AXUIElementSetAttributeValue(latest.element, kAXValueAttribute as CFString, value as CFString)
-        writeOutput(result == .success ? "applied" : "preview")
-        return
-    }
-
-    let mustSelect = selection.length == 0
-    guard let latest = currentField(), sameField(original, latest, selection: selection) else {
-        writeOutput("changed")
-        return
-    }
-    if mustSelect {
-        guard select(range, in: latest.element) else {
-            writeOutput("preview")
-            return
-        }
-        guard let selected = currentField(), sameField(original, selected, selection: range) else {
-            writeOutput("changed")
-            return
-        }
-    }
-    let result = AXUIElementSetAttributeValue(
-        latest.element, kAXSelectedTextAttribute as CFString, correction as CFString
-    )
-    if result != .success, mustSelect, let latest = currentField(),
-       sameField(original, latest, selection: range) {
-        _ = select(selection, in: latest.element)
-    }
-    writeOutput(result == .success ? "applied" : "preview")
+    writeOutput(replacePlainText(original, correction: correction, currentField: currentField))
 }
 
 if CommandLine.arguments.dropFirst().first == "--grammar-correction" {

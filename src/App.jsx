@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "./index.css";
 import "./components/FloatingPill.css";
-import { AudioLines, Eye, Pencil, X } from "lucide-react";
+import { AudioLines, Eye, Pencil, PencilLine, X } from "lucide-react";
 import { useToast } from "./components/ui/useToast";
 import { useWindowDrag } from "./hooks/useWindowDrag";
 import { useAudioRecording } from "./hooks/useAudioRecording";
@@ -27,6 +27,7 @@ const VoiceWaveIndicator = ({ level }) => (
 
 export default function App() {
   const [isHovered, setIsHovered] = useState(false);
+  const [isGrammarCorrecting, setIsGrammarCorrecting] = useState(false);
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [quickSettings, setQuickSettings] = useState(null);
   const isQuickSettingsOpen = Boolean(quickSettings);
@@ -134,12 +135,51 @@ export default function App() {
   }, [toast, dismiss, t]);
 
   useEffect(() => {
-    if (isCommandMenuOpen || quickSettings || toastCount > 0) {
+    if (isGrammarCorrecting) {
+      setWindowInteractivity(false);
+    } else if (isCommandMenuOpen || quickSettings || toastCount > 0) {
       setWindowInteractivity(true);
     } else {
       setWindowInteractivity(isHovered);
     }
-  }, [isCommandMenuOpen, quickSettings, isHovered, toastCount, setWindowInteractivity]);
+  }, [
+    isGrammarCorrecting,
+    isCommandMenuOpen,
+    quickSettings,
+    isHovered,
+    toastCount,
+    setWindowInteractivity,
+  ]);
+
+  useEffect(() => {
+    let mounted = true;
+    let receivedUpdate = false;
+    const update = (working) => {
+      if (!mounted) return;
+      setIsGrammarCorrecting(working);
+      if (working) {
+        clearTimeout(hoverExitTimeoutRef.current);
+        setIsHovered(false);
+        setQuickSettings(null);
+        setIsCommandMenuOpen(false);
+      }
+    };
+    const unsubscribe = window.electronAPI?.onGrammarCorrectionState?.((working) => {
+      receivedUpdate = true;
+      update(working);
+    });
+    // Restore the working state if the renderer reloads during a correction.
+    window.electronAPI
+      ?.getGrammarCorrectionState?.()
+      .then((working) => {
+        if (!receivedUpdate) update(working);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+      unsubscribe?.();
+    };
+  }, []);
 
   useEffect(() => {
     window.electronAPI?.setMainWindowFocusable?.(isQuickSettingsOpen);
@@ -168,7 +208,7 @@ export default function App() {
     const sizeKey =
       quickSettings || (isCommandMenuOpen && toastCount > 0)
         ? "EXPANDED"
-        : isCommandMenuOpen || isHovered
+        : isCommandMenuOpen || isHovered || isGrammarCorrecting
           ? "WITH_MENU"
           : toastCount > 0
             ? "WITH_TOAST"
@@ -189,7 +229,7 @@ export default function App() {
     }
 
     resize();
-  }, [isCommandMenuOpen, quickSettings, isHovered, toastCount]);
+  }, [isCommandMenuOpen, quickSettings, isHovered, toastCount, isGrammarCorrecting]);
 
   const handleDictationToggle = React.useCallback(() => {
     setQuickSettings(null);
@@ -236,7 +276,13 @@ export default function App() {
   useEffect(() => {
     let hideTimeout;
 
-    if (floatingIconAutoHide && !isRecording && !isProcessing && toastCount === 0) {
+    if (
+      floatingIconAutoHide &&
+      !isRecording &&
+      !isProcessing &&
+      !isGrammarCorrecting &&
+      toastCount === 0
+    ) {
       // Delay briefly so processing can start after recording stops without a flash
       hideTimeout = setTimeout(() => {
         window.electronAPI?.hideWindow?.();
@@ -247,7 +293,7 @@ export default function App() {
 
     prevAutoHideRef.current = floatingIconAutoHide;
     return () => clearTimeout(hideTimeout);
-  }, [isRecording, isProcessing, floatingIconAutoHide, toastCount]);
+  }, [isRecording, isProcessing, isGrammarCorrecting, floatingIconAutoHide, toastCount]);
 
   const handleClose = () => {
     window.electronAPI.hideWindow();
@@ -293,6 +339,7 @@ export default function App() {
 
   // Determine current mic state
   const getMicState = () => {
+    if (isGrammarCorrecting) return "grammar";
     if (isRecording && (micCaptureStatus === "reconnecting" || micCaptureStatus === "unavailable"))
       return "unavailable";
     if (isRecording) return "recording";
@@ -304,8 +351,12 @@ export default function App() {
   const micState = getMicState();
 
   const isExpanded =
-    !isRecording && !isProcessing && (isHovered || isCommandMenuOpen || Boolean(quickSettings));
-  const isPillHidden = floatingIconAutoHide && !isRecording && !isProcessing;
+    !isRecording &&
+    !isProcessing &&
+    !isGrammarCorrecting &&
+    (isHovered || isCommandMenuOpen || Boolean(quickSettings));
+  const isPillHidden =
+    floatingIconAutoHide && !isRecording && !isProcessing && !isGrammarCorrecting;
   const micLabel =
     micState === "unavailable"
       ? t("app.mic.waitingForMicrophone")
@@ -316,6 +367,7 @@ export default function App() {
           : t("app.quickSettings.speech");
 
   const enterPill = () => {
+    if (isGrammarCorrecting) return;
     clearTimeout(hoverExitTimeoutRef.current);
     setIsHovered(true);
     setWindowInteractivity(true);
@@ -400,8 +452,8 @@ export default function App() {
               aria-haspopup={!isRecording ? "dialog" : undefined}
               aria-expanded={quickSettings === "speech"}
               title={isExpanded ? micLabel : undefined}
-              disabled={isProcessing}
-              tabIndex={quickSettings ? -1 : 0}
+              disabled={isProcessing || isGrammarCorrecting}
+              tabIndex={quickSettings || isGrammarCorrecting ? -1 : 0}
               onMouseDown={(e) => {
                 setIsCommandMenuOpen(false);
                 setDragStartPos({ x: e.clientX, y: e.clientY });
@@ -464,6 +516,17 @@ export default function App() {
             >
               <Eye size={20} strokeWidth={1.7} aria-hidden="true" />
             </button>
+            {isGrammarCorrecting && (
+              <div className="floating-pill-grammar" role="status" aria-live="polite">
+                <span>{t("grammarCorrection.working")}</span>
+                <PencilLine
+                  className="floating-pill-grammar-pencil"
+                  size={14}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+              </div>
+            )}
             {quickSettings && (
               <PillQuickSettings
                 key={quickSettings}

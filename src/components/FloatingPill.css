@@ -34,6 +34,69 @@
   background: #737373;
 }
 
+.floating-pill[data-state="grammar"] {
+  width: 100px;
+  height: 28px;
+  background: #000;
+  border-color: rgb(255 255 255 / 20%);
+}
+
+.floating-pill-grammar {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px;
+  color: #fff;
+  font-family: var(--font-family-sans);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: pill-grammar-reveal 220ms 100ms both;
+}
+
+.floating-pill-grammar > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.floating-pill-grammar-pencil {
+  flex: none;
+  color: #a7efc4;
+  transform-origin: 25% 85%;
+  animation: pill-grammar-write 1200ms ease-in-out infinite;
+}
+
+@keyframes pill-grammar-reveal {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes pill-grammar-write {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  35% {
+    transform: translate(-1px, 1px) rotate(-9deg);
+  }
+  65% {
+    transform: translate(1px, 0) rotate(5deg);
+  }
+}
+
 .floating-pill-mic,
 .floating-pill-action {
   position: absolute;
@@ -398,6 +461,10 @@
     filter: none;
   }
   .pill-quick-settings {
+    animation: none;
+  }
+  .floating-pill-grammar,
+  .floating-pill-grammar-pencil {
     animation: none;
   }
 }

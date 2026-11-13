@@ -10,6 +10,12 @@ const registered = new Map();
 const notifications = [];
 const clipboardWrites = [];
 const history = [];
+const openedUrls = [];
+const workingStates = [];
+let generationWait;
+let onGenerationStarted;
+let permissionGranted = true;
+let generatedText = "I wrote an email.";
 let userData;
 let requests;
 
@@ -22,7 +28,8 @@ require.cache[require.resolve("electron")] = {
     },
     ipcMain: { handle: (channel, callback) => handlers.set(channel, callback) },
     BrowserWindow: class {},
-    shell: {},
+    shell: { openExternal: async (url) => openedUrls.push(url) },
+    systemPreferences: { isTrustedAccessibilityClient: () => permissionGranted },
     Notification: class extends EventEmitter {
       constructor(options) {
         super();
@@ -50,7 +57,9 @@ require.cache[require.resolve("../../src/helpers/chatgptSubscription")] = {
     status: () => ({ connected: true }),
     async generate(request) {
       requests.push(request);
-      return "I wrote an email.";
+      onGenerationStarted?.();
+      await generationWait;
+      return generatedText;
     },
   },
 };
@@ -68,13 +77,20 @@ function setUp(t, helperScript) {
   notifications.length = 0;
   clipboardWrites.length = 0;
   history.length = 0;
+  openedUrls.length = 0;
+  permissionGranted = true;
+  generatedText = "I wrote an email.";
+  generationWait = undefined;
+  onGenerationStarted = undefined;
+  workingStates.length = 0;
 
   const hotkeys = new HotkeyManager();
   hotkeys.setupShortcuts("F8", () => {});
   setupGrammarCorrection(
     hotkeys,
     { resolveBinary: () => ({ command: process.execPath, args: ["-e", helperScript, "--"] }) },
-    (entry) => history.push(entry)
+    (entry) => history.push(entry),
+    (working) => workingStates.push(working)
   )();
   const setHotkey = (hotkey) => handlers.get("set-grammar-correction-hotkey")(null, hotkey);
   assert.equal(setHotkey("F8").success, false);
@@ -85,6 +101,60 @@ function setUp(t, helperScript) {
 
 const macOnly = { skip: process.platform !== "darwin" };
 
+test("missing Accessibility access opens settings without reading text", macOnly, async (t) => {
+  const correct = setUp(t, 'console.log("text:" + JSON.stringify("private draft"))');
+  permissionGranted = false;
+  await correct();
+  assert.deepEqual(requests, []);
+  assert.equal(notifications.length, 1);
+  assert.match(notifications[0].options.body, /Accessibility/);
+  notifications[0].emit("click");
+  assert.deepEqual(openedUrls, [
+    "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+  ]);
+});
+
+test("helper permission failures open Accessibility settings", macOnly, async (t) => {
+  const correct = setUp(t, 'console.log("permission")');
+  await correct();
+  assert.deepEqual(requests, []);
+  notifications[0].emit("click");
+  assert.match(openedUrls[0], /Privacy_Accessibility/);
+});
+
+test(
+  "permission lost during correction preserves the result and offers settings",
+  macOnly,
+  async (t) => {
+    const correct = setUp(
+      t,
+      `console.log('text:' + JSON.stringify('I writed an email.'));
+    require('node:readline').createInterface({ input: process.stdin }).once('line', () => {
+      console.log('permission');
+    });`
+    );
+    await correct();
+    assert.equal(history[0].outcome, "preview");
+    assert.deepEqual(clipboardWrites, []);
+    notifications[0].emit("click");
+    assert.deepEqual(clipboardWrites, ["I wrote an email."]);
+    assert.match(openedUrls[0], /Privacy_Accessibility/);
+  }
+);
+
+test("an empty model response never replaces the original", macOnly, async (t) => {
+  const correct = setUp(
+    t,
+    `console.log('text:' + JSON.stringify('I writed an email.'));
+    process.stdin.on('data', () => process.exit(1));`
+  );
+  generatedText = "  ";
+  await correct();
+  assert.equal(requests.length, 1);
+  assert.deepEqual(history, []);
+  assert.match(notifications[0].options.body, /couldn’t finish/);
+});
+
 test("unavailable fields never send text to ChatGPT", macOnly, async (t) => {
   const correct = setUp(t, 'console.log("unsupported")');
   await correct();
@@ -92,7 +162,47 @@ test("unavailable fields never send text to ChatGPT", macOnly, async (t) => {
   assert.deepEqual(requests, []);
   assert.deepEqual(history, []);
   assert.deepEqual(clipboardWrites, []);
+  assert.deepEqual(workingStates, [true, false]);
+  assert.equal(handlers.get("get-grammar-correction-state")(), false);
 });
+
+test(
+  "working state spans capture, generation and replacement without duplicate starts",
+  { ...macOnly, timeout: 5000 },
+  async (t) => {
+    const correct = setUp(
+      t,
+      `console.log('text:' + JSON.stringify('I writed an email.'));
+    require('node:readline').createInterface({ input: process.stdin }).once('line', () => {
+      console.log('applied');
+    });`
+    );
+    let finish;
+    generationWait = new Promise((resolve) => {
+      finish = resolve;
+    });
+    const started = new Promise((resolve) => {
+      onGenerationStarted = resolve;
+    });
+    const pending = correct();
+    try {
+      assert.deepEqual(workingStates, [true]);
+      assert.equal(handlers.get("get-grammar-correction-state")(), true);
+      await started;
+      assert.equal(history.length, 0);
+      assert.equal(requests.length, 1);
+      assert.equal(handlers.get("get-grammar-correction-state")(), true);
+      await correct();
+      assert.deepEqual(workingStates, [true]);
+    } finally {
+      finish();
+      await pending;
+    }
+    assert.deepEqual(workingStates, [true, false]);
+    assert.equal(history[0].outcome, "applied");
+    assert.equal(handlers.get("get-grammar-correction-state")(), false);
+  }
+);
 
 test(
   "a changed field only copies the correction when the notification is clicked",

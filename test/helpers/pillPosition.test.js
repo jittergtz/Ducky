@@ -21,6 +21,33 @@ require.cache[require.resolve("electron")] = {
 const { WindowPositionUtil, WINDOW_SIZES } = require("../../src/helpers/windowConfig");
 const WindowManager = require("../../src/helpers/windowManager");
 
+test("grammar activity shows a passive pill and sends state without focusing the editor away", () => {
+  const calls = [];
+  const manager = {
+    mainWindow: {
+      isDestroyed: () => false,
+      isMinimized: () => false,
+      isVisible: () => false,
+      showInactive: () => calls.push("showInactive"),
+      focus: () => assert.fail("Grammar correction must retain editor focus"),
+      webContents: { send: (...args) => calls.push(args) },
+    },
+    _repositionToCursorDisplay() {},
+    setMainWindowFocusable: (value) => calls.push(["focusable", value]),
+    setMainWindowInteractivity: (value) => calls.push(["interactive", value]),
+    showDictationPanel: WindowManager.prototype.showDictationPanel,
+  };
+  WindowManager.prototype.setGrammarCorrectionWorking.call(manager, true);
+  WindowManager.prototype.setGrammarCorrectionWorking.call(manager, false);
+  assert.deepEqual(calls, [
+    ["focusable", false],
+    ["interactive", false],
+    "showInactive",
+    ["grammar-correction-state", true],
+    ["grammar-correction-state", false],
+  ]);
+});
+
 test("top-center uses the display center and starts below the menu bar", () => {
   assert.deepEqual(WindowPositionUtil.getMainWindowPosition(display, null, "top-center"), {
     x: -948,

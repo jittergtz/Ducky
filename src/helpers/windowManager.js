@@ -570,6 +570,17 @@ class WindowManager {
     this._floatingIconAutoHide = Boolean(enabled);
   }
 
+  setGrammarCorrectionWorking(working) {
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
+    if (working) {
+      // The editor must retain focus for capture and replacement.
+      this.setMainWindowFocusable(false);
+      this.setMainWindowInteractivity(false);
+      this.showDictationPanel();
+    }
+    this.mainWindow.webContents.send("grammar-correction-state", working);
+  }
+
   setPanelStartPosition(position) {
     this._panelStartPosition = position || "bottom-right";
     // Reposition the window immediately

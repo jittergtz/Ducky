@@ -1,4 +1,9 @@
 {
+  "grammarCorrection": {
+    "working": "Arbeite…",
+    "permission": "Erlaube Ducky unter Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen. Klicke, um die Einstellungen zu öffnen.",
+    "permissionCopy": "Ducky benötigt Zugriff auf Bedienungshilfen, um Text zu ersetzen. Klicke, um die Korrektur zu kopieren und die Einstellungen zu öffnen."
+  },
   "appIcon": {
     "title": "App-Symbol",
     "classic": "Klassisch",
