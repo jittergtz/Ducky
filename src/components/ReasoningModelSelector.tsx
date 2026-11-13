@@ -24,6 +24,8 @@ import { getRemoteProviderIcon } from "../utils/providerIcons";
 import { GetApiKeyLink } from "./ui/GetApiKeyLink";
 import { getCachedPlatform } from "../utils/platform";
 import { useSettingsStore } from "../stores/settingsStore";
+import { useChatgptSubscription } from "../hooks/useChatgptSubscription";
+import { ProviderSettingsLink } from "./ui/ProviderSettingsLink";
 
 type CloudModelOption = {
   value: string;
@@ -350,35 +352,20 @@ export default function ReasoningModelSelector({
     error: tinfoilModelsError,
   } = useTinfoilModels(selectedCloudProvider === "tinfoil");
 
-  const [chatgptStatus, setChatgptStatus] = useState<{ connected: boolean; email: string }>({
-    connected: false,
-    email: "",
-  });
-  const [chatgptModels, setChatgptModels] = useState<CloudModelOption[]>([]);
-  const [chatgptError, setChatgptError] = useState("");
-  const [chatgptBusy, setChatgptBusy] = useState(false);
-  const refreshChatgpt = useCallback(async () => {
-    try {
-      const status = await window.electronAPI.chatgptSubscriptionStatus();
-      setChatgptStatus(status);
-      if (status.connected) setChatgptModels(await window.electronAPI.chatgptSubscriptionModels());
-      else setChatgptModels([]);
-      setChatgptError("");
-    } catch (error) {
-      setChatgptError(error instanceof Error ? error.message : String(error));
-    }
-  }, []);
-  useEffect(() => {
-    if (selectedCloudProvider === "chatgpt-subscription") void refreshChatgpt();
-  }, [selectedCloudProvider, refreshChatgpt]);
-
   const effectiveMode = mode || selectedMode;
+  const isChatgpt = selectedCloudProvider === "chatgpt-subscription";
+  const {
+    account: chatgptAccount,
+    models: chatgptModels,
+    loading: chatgptLoading,
+    error: chatgptError,
+  } = useChatgptSubscription(effectiveMode === "cloud" && isChatgpt);
 
   const cloudProviders = CLOUD_PROVIDER_IDS.map((id) => ({
     id,
     name:
       id === "chatgpt-subscription"
-        ? "ChatGPT subscription"
+        ? t("providers.chatgpt.name")
         : id === "custom"
           ? t("reasoning.custom.providerName")
           : id === OPENROUTER_TAB
@@ -603,60 +590,20 @@ export default function ReasoningModelSelector({
               />
             ) : (
               <>
-                {selectedCloudProvider === "chatgpt-subscription" && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Use your ChatGPT plan for text cleanup and notes. Transcript text is sent to
-                      OpenAI.
+                {isChatgpt && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-card/50 px-3 py-2">
+                    <p className="text-xs text-muted-foreground" role="status">
+                      {t(
+                        chatgptError
+                          ? "providers.chatgpt.loadFailed"
+                          : chatgptLoading
+                            ? "providers.chatgpt.loading"
+                            : chatgptAccount?.connected
+                              ? "providers.chatgpt.connectedHint"
+                              : "providers.chatgpt.connectHint"
+                      )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {chatgptStatus.connected
-                        ? `Connected ${chatgptStatus.email}`
-                        : "Not connected"}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        disabled={chatgptBusy}
-                        onClick={async () => {
-                          setChatgptBusy(true);
-                          try {
-                            if (chatgptStatus.connected) {
-                              const result =
-                                await window.electronAPI.chatgptSubscriptionDisconnect();
-                              await refreshChatgpt();
-                              if (!result.revoked)
-                                setChatgptError(
-                                  "Signed out locally. Remote revocation could not be confirmed; manage access in ChatGPT settings."
-                                );
-                            } else {
-                              await window.electronAPI.chatgptSubscriptionSignIn();
-                              await refreshChatgpt();
-                            }
-                          } catch (error) {
-                            setChatgptError(error instanceof Error ? error.message : String(error));
-                          } finally {
-                            setChatgptBusy(false);
-                          }
-                        }}
-                      >
-                        {chatgptStatus.connected ? "Disconnect" : "Continue with ChatGPT"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          window.electronAPI.openExternal("https://chatgpt.com/settings/usage")
-                        }
-                      >
-                        Manage usage
-                      </Button>
-                    </div>
-                    {chatgptError && (
-                      <p role="alert" className="text-xs text-destructive">
-                        {chatgptError}
-                      </p>
-                    )}
+                    <ProviderSettingsLink />
                   </div>
                 )}
 
@@ -751,30 +698,33 @@ export default function ReasoningModelSelector({
                   </div>
                 )}
 
-                <div className="pt-3 space-y-2">
-                  <h4 className="text-sm font-medium text-foreground">
-                    {t("reasoning.selectModel")}
-                  </h4>
-                  <ModelCardList
-                    models={selectedCloudModels}
-                    selectedModel={reasoningModel}
-                    onModelSelect={setReasoningModel}
-                  />
-                  {selectedCloudProvider === "tinfoil" && (
-                    <>
-                      {tinfoilModelsLoading && (
-                        <p className="text-xs text-muted-foreground">
-                          {t("reasoning.tinfoil.refreshingModels")}
-                        </p>
-                      )}
-                      {!tinfoilModelsLoading && tinfoilModelsError && (
-                        <p className="text-xs text-destructive">
-                          {t("reasoning.custom.unableToLoadModels")}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
+                {(!isChatgpt ||
+                  (chatgptAccount?.connected && !chatgptLoading && !chatgptError)) && (
+                  <div className="pt-3 space-y-2">
+                    <h4 className="text-sm font-medium text-foreground">
+                      {t("reasoning.selectModel")}
+                    </h4>
+                    <ModelCardList
+                      models={selectedCloudModels}
+                      selectedModel={reasoningModel}
+                      onModelSelect={setReasoningModel}
+                    />
+                    {selectedCloudProvider === "tinfoil" && (
+                      <>
+                        {tinfoilModelsLoading && (
+                          <p className="text-xs text-muted-foreground">
+                            {t("reasoning.tinfoil.refreshingModels")}
+                          </p>
+                        )}
+                        {!tinfoilModelsLoading && tinfoilModelsError && (
+                          <p className="text-xs text-destructive">
+                            {t("reasoning.custom.unableToLoadModels")}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

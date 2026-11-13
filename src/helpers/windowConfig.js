@@ -165,7 +165,12 @@ class WindowPositionUtil {
     const workArea = display.workArea || display.bounds;
 
     let x, y;
-    if (position === "bottom-left") {
+    if (position === "top-center") {
+      const bounds = display.bounds || workArea;
+      x = Math.round(bounds.x + (bounds.width - width) / 2);
+      x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - width));
+      y = workArea.y + MARGIN;
+    } else if (position === "bottom-left") {
       x = workArea.x + MARGIN;
       y = Math.max(0, workArea.y + workArea.height - height - MARGIN);
     } else if (position === "center") {
@@ -203,6 +208,7 @@ class WindowPositionUtil {
 
     let x = Math.round(mainWindowBounds.x + (mainWindowBounds.width - width) / 2);
     let y = mainWindowBounds.y - height - GAP;
+    if (y < workArea.y) y = mainWindowBounds.y + mainWindowBounds.height + GAP;
 
     x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - width));
     y = Math.max(workArea.y, Math.min(y, workArea.y + workArea.height - height));

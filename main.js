@@ -18,12 +18,19 @@ const {
   BrowserWindow,
   dialog,
   ipcMain,
+  nativeImage,
   net,
   session,
   systemPreferences,
 } = require("electron");
 const path = require("path");
-const { APP_NAME, APP_ID, resolveUserDataPath } = require("./src/helpers/appIdentity");
+const {
+  APP_NAME,
+  APP_ID,
+  resolveUserDataPath,
+  getAppIconPath,
+} = require("./src/helpers/appIdentity");
+const { AppIconManager } = require("./src/helpers/appIconManager");
 const http = require("http");
 const tls = require("tls");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
@@ -907,7 +914,15 @@ async function startApp() {
     environmentManager.savePanelStartPosition(position);
   });
 
-  dockManager.init();
+  const appIconManager = new AppIconManager({
+    app,
+    BrowserWindow,
+    nativeImage,
+    getIconPath: getAppIconPath,
+    logger: debugLogger,
+  });
+  appIconManager.initialize(ipcMain);
+  dockManager.init(getAppIconPath(appIconManager.selectedIcon));
 
   // In development, wait for Vite dev server to be ready
   if (process.env.NODE_ENV === "development") {

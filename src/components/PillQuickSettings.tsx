@@ -330,7 +330,7 @@ export default function PillQuickSettings({
             <label className="pill-quick-label">
               {t("app.quickSettings.providerModel")}
               <div className="pill-quick-provider-model">
-                <span>OpenAI</span>
+                <span>{t("providers.chatgpt.name")}</span>
                 <QuickSelect
                   label={t("app.quickSettings.model")}
                   value={grammar?.model || ""}

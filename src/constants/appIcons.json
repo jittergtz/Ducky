@@ -1,0 +1,5 @@
+[
+  { "id": "classic", "file": "icon.png" },
+  { "id": "glacier", "file": "app-icons/DuckyR2G.png" },
+  { "id": "rose", "file": "app-icons/DuckyR1G.png" }
+]

@@ -5,6 +5,7 @@ import {
   UserPlus,
   X,
   Search,
+  Plug,
 } from "lucide-react";
 import logoIcon from "../assets/icon.png";
 import homeIcon from "../assets/icons/sidebar/home.png";
@@ -35,7 +36,7 @@ const rowButtonClass =
   "group flex items-center gap-2.5 w-full h-8 px-2.5 rounded-md text-left outline-none hover:bg-foreground/4 dark:hover:bg-white/4 focus-visible:ring-1 focus-visible:ring-primary/30 transition-colors duration-150";
 
 export type ControlPanelView =
-  "home" | "grammar" | "chat" | "personal-notes" | "dictionary" | "upload" | "integrations";
+  "home" | "grammar" | "chat" | "personal-notes" | "dictionary" | "upload" | "providers" | "integrations";
 
 interface ControlPanelSidebarProps {
   activeView: ControlPanelView;
@@ -97,11 +98,12 @@ export default function ControlPanelSidebar({
     { id: "personal-notes", label: t("sidebar.notes"), image: notesIcon },
     { id: "upload", label: t("sidebar.upload"), image: uploadIcon },
     { id: "dictionary", label: t("sidebar.dictionary"), image: dictionaryIcon },
+    { id: "providers", label: t("sidebar.provider"), icon: Plug },
     { id: "integrations", label: t("sidebar.integrations"), icon: Blocks },
   ];
 
   return (
-    <div className="control-panel-sidebar w-48 h-full shrink-0 border-r border-border/15 dark:border-white/6 flex flex-col bg-transparent">
+    <div className="control-panel-sidebar w-48 h-full shrink-0 flex flex-col bg-transparent">
       <div
         className="w-full h-10 shrink-0"
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
@@ -143,6 +145,7 @@ export default function ControlPanelSidebar({
           return (
             <button
               key={item.id}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => onViewChange(item.id)}
               className={cn(
                 "group relative flex items-center gap-2.5 w-full h-8 px-2.5 rounded-md outline-none transition-colors duration-150 text-left",

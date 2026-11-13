@@ -82,8 +82,8 @@ export default function InferenceConfigEditor({ scope, onModeChange }: Inference
       : []),
     {
       id: "providers",
-      label: t(`${prefix}.providers`),
-      description: t(`${prefix}.providersDesc`),
+      label: t("settingsPage.aiModels.modes.providers"),
+      description: t("providers.cloudModeDescription"),
       icon: <Key className="w-4 h-4" />,
     },
     {

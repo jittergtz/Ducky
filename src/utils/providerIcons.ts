@@ -19,6 +19,7 @@ import tinfoilIcon from "@/assets/icons/providers/tinfoil.svg";
 
 export const PROVIDER_ICONS: Record<string, string> = {
   openai: openaiIcon,
+  "chatgpt-subscription": openaiIcon,
   whisper: openaiIcon,
   anthropic: anthropicIcon,
   gemini: geminiIcon,
@@ -45,6 +46,7 @@ export function getProviderIcon(provider: string): string | undefined {
 
 export const MONOCHROME_PROVIDERS = [
   "openai",
+  "chatgpt-subscription",
   "whisper",
   "anthropic",
   "openai-oss",

@@ -489,7 +489,8 @@ class EnvironmentManager {
 
   getPanelStartPosition() {
     const v = this._getKey("PANEL_START_POSITION");
-    if (v === "bottom-right" || v === "center" || v === "bottom-left") return v;
+    if (v === "bottom-right" || v === "center" || v === "bottom-left" || v === "top-center")
+      return v;
     return "bottom-right";
   }
 

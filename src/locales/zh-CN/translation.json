@@ -1,4 +1,16 @@
 {
+  "appIcon": {
+    "title": "应用图标",
+    "classic": "经典",
+    "glacier": "冰川",
+    "rose": "玫瑰",
+    "macDescription": "选择 Ducky 运行时在程序坞中显示的图标。更改立即生效，并保存在此设备上。",
+    "windowDescription": "选择 Ducky 已打开窗口的图标。更改立即生效，并保存在此设备上。",
+    "installedNote": "已安装的应用和固定的快捷方式仍使用标准图标。",
+    "unsupported": "此处无法切换应用图标。",
+    "error": "无法加载或更改应用图标，请重试。",
+    "retry": "重试"
+  },
   "settings": {
     "language": {
       "sectionTitle": "语言",

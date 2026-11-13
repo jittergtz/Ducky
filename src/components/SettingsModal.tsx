@@ -19,8 +19,13 @@ export type { SettingsSectionType };
 
 // The old AI Models sidebar had four items (transcription, meetings,
 // intelligence, agentMode) — they now collapse into two: speechToText + llms.
-// Legacy deep-links land on the matching sub-tab via LEGACY_SUB_TAB.
+// Task and legacy deep links land on the matching sub-tab via SECTION_SUB_TAB.
 const SECTION_ALIASES: Record<string, SettingsSectionType> = {
+  dictationCleanup: "llms",
+  dictationAgent: "llms",
+  dictationTranslation: "llms",
+  noteFormatting: "llms",
+  chatIntelligence: "llms",
   aiModels: "llms",
   agentConfig: "llms",
   agentMode: "llms",
@@ -28,6 +33,7 @@ const SECTION_ALIASES: Record<string, SettingsSectionType> = {
   meetings: "llms",
   prompts: "llms",
   transcription: "speechToText",
+  noteRecording: "speechToText",
   uploadTranscription: "speechToText",
   softwareUpdates: "system",
   privacy: "privacyData",
@@ -35,8 +41,14 @@ const SECTION_ALIASES: Record<string, SettingsSectionType> = {
   developer: "system",
 };
 
-const LEGACY_SUB_TAB: Record<string, string> = {
+const SECTION_SUB_TAB: Record<string, string> = {
+  dictationCleanup: "dictationCleanup",
+  dictationAgent: "dictationAgent",
+  dictationTranslation: "dictationTranslation",
+  noteFormatting: "noteFormatting",
+  chatIntelligence: "chatIntelligence",
   transcription: "dictation",
+  noteRecording: "noteRecording",
   uploadTranscription: "upload",
   meetings: "noteFormatting",
   intelligence: "dictationCleanup",
@@ -146,14 +158,14 @@ export default function SettingsModal({ open, onOpenChange, initialSection }: Se
     resolveSection(initialSection)
   );
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(() =>
-    initialSection ? LEGACY_SUB_TAB[initialSection] : undefined
+    initialSection ? SECTION_SUB_TAB[initialSection] : undefined
   );
   const [prevOpen, setPrevOpen] = useState(open);
 
   if (open && !prevOpen && initialSection) {
     setPrevOpen(open);
     setActiveSection(resolveSection(initialSection));
-    setInitialSubTab(LEGACY_SUB_TAB[initialSection]);
+    setInitialSubTab(SECTION_SUB_TAB[initialSection]);
   } else if (open !== prevOpen) {
     setPrevOpen(open);
     if (!open) setInitialSubTab(undefined);

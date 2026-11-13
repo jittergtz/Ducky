@@ -175,7 +175,11 @@ class WindowManager {
 
     let newX, newY;
 
-    if (position === "bottom-left") {
+    if (position === "top-center") {
+      const centerX = currentBounds.x + currentBounds.width / 2;
+      newX = Math.round(centerX - newSize.width / 2);
+      newY = currentBounds.y;
+    } else if (position === "bottom-left") {
       // Anchor bottom-left corner: keep x, expand rightward and upward
       newX = currentBounds.x;
       newY = currentBounds.y + currentBounds.height - newSize.height;

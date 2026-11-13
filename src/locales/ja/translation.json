@@ -1,4 +1,16 @@
 {
+  "appIcon": {
+    "title": "アプリアイコン",
+    "classic": "クラシック",
+    "glacier": "グレイシャー",
+    "rose": "ローズ",
+    "macDescription": "Duckyの実行中にDockに表示するアイコンを選びます。すぐに適用され、このデバイスに保存されます。",
+    "windowDescription": "Duckyの開いているウィンドウのアイコンを選びます。すぐに適用され、このデバイスに保存されます。",
+    "installedNote": "インストール済みアプリとピン留めしたショートカットは標準アイコンのままです。",
+    "unsupported": "ここではアプリアイコンを変更できません。",
+    "error": "アイコンを読み込むか変更できませんでした。もう一度お試しください。",
+    "retry": "再試行"
+  },
   "settings": {
     "language": {
       "sectionTitle": "言語",

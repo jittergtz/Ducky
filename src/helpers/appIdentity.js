@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const appIcons = require("../constants/appIcons.json");
 
 const APP_NAME = "Ducky";
 const APP_ID = "com.gizmolabs.ducky";
@@ -15,11 +16,13 @@ function resolveUserDataPath(appData, channel, exists = fs.existsSync) {
   return candidates.find((candidate) => exists(candidate)) || candidates[0];
 }
 
-function getAppIconPath() {
+function getAppIconPath(iconId = "classic") {
   const { app } = require("electron");
-  return app.isPackaged
-    ? path.join(process.resourcesPath, "src", "assets", "icon.png")
-    : path.join(__dirname, "..", "assets", "icon.png");
+  const icon = appIcons.find((entry) => entry.id === iconId) || appIcons[0];
+  const assets = app.isPackaged
+    ? path.join(process.resourcesPath, "src", "assets")
+    : path.join(__dirname, "..", "assets");
+  return path.join(assets, icon.file);
 }
 
 module.exports = { APP_NAME, APP_ID, resolveUserDataPath, getAppIconPath };

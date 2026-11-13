@@ -15,7 +15,7 @@ export default function EmptyConversationList({ onNewChat }: EmptyConversationLi
       <button
         onClick={onNewChat}
         className={cn(
-          "flex items-center gap-1.5 h-7 px-2.5 rounded-md",
+          "flex items-center gap-1.5 h-7 px-2.5 rounded-full",
           "text-xs text-primary hover:bg-primary/8",
           "transition-colors duration-150",
           "focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"

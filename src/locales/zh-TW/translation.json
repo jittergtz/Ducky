@@ -1,4 +1,16 @@
 {
+  "appIcon": {
+    "title": "應用程式圖示",
+    "classic": "經典",
+    "glacier": "冰川",
+    "rose": "玫瑰",
+    "macDescription": "選擇 Ducky 執行時在 Dock 中顯示的圖示。變更立即生效，並儲存在此裝置上。",
+    "windowDescription": "選擇 Ducky 已開啟視窗的圖示。變更立即生效，並儲存在此裝置上。",
+    "installedNote": "已安裝的應用程式和釘選的捷徑仍使用標準圖示。",
+    "unsupported": "此處無法切換應用程式圖示。",
+    "error": "無法載入或變更應用程式圖示，請重試。",
+    "retry": "重試"
+  },
   "settings": {
     "language": {
       "sectionTitle": "語言",

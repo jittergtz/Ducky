@@ -361,6 +361,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
   snapToMeetingMode: () => ipcRenderer.invoke("snap-to-meeting-mode"),
   restoreFromMeetingMode: () => ipcRenderer.invoke("restore-from-meeting-mode"),
   getPlatform: () => process.platform,
+  getAppIcon: () => ipcRenderer.invoke("get-app-icon"),
+  setAppIcon: (iconId) => ipcRenderer.invoke("set-app-icon", iconId),
+  onAppIconChanged: registerListener(
+    "app-icon-changed",
+    (callback) => (_event, state) => callback(state)
+  ),
 
   // Cleanup function
   cleanupApp: () => ipcRenderer.invoke("cleanup-app"),

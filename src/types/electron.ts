@@ -1,6 +1,12 @@
 import type { ModelDefinition } from "../models/ModelRegistry";
 import type { TinfoilCatalogModel } from "../models/tinfoilModels";
 
+export type AppIconId = "classic" | "glacier" | "rose";
+export interface AppIconState {
+  selectedIcon: AppIconId;
+  supported: boolean;
+}
+
 export type LocalTranscriptionProvider = "whisper" | "nvidia" | "qwen";
 export interface QwenModelProgress {
   modelId: string;
@@ -1118,6 +1124,9 @@ declare global {
       snapToMeetingMode: () => Promise<void>;
       restoreFromMeetingMode: () => Promise<void>;
       getPlatform: () => string;
+      getAppIcon: () => Promise<AppIconState>;
+      setAppIcon: (iconId: AppIconId) => Promise<AppIconState & { success: boolean }>;
+      onAppIconChanged: (callback: (state: AppIconState) => void) => () => void;
       startWindowDrag: () => Promise<void>;
       stopWindowDrag: () => Promise<void>;
       setMainWindowInteractivity: (interactive: boolean) => Promise<void>;

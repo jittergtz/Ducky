@@ -1,4 +1,16 @@
 {
+  "appIcon": {
+    "title": "App-Symbol",
+    "classic": "Klassisch",
+    "glacier": "Gletscher",
+    "rose": "Rosé",
+    "macDescription": "Wähle das Symbol, das im Dock angezeigt wird, während Ducky läuft. Die Auswahl gilt sofort und wird auf diesem Gerät gespeichert.",
+    "windowDescription": "Wähle das Symbol für Duckys geöffnete Fenster. Die Auswahl gilt sofort und wird auf diesem Gerät gespeichert.",
+    "installedNote": "Das Symbol der installierten App und angeheftete Verknüpfungen behalten das Standardsymbol.",
+    "unsupported": "Das App-Symbol kann hier nicht geändert werden.",
+    "error": "Das App-Symbol konnte nicht geladen oder geändert werden. Bitte versuche es erneut.",
+    "retry": "Erneut versuchen"
+  },
   "settings": {
     "language": {
       "sectionTitle": "Sprache",

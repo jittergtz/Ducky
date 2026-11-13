@@ -530,7 +530,7 @@ export interface SettingsState
   whisperVadMaxSpeechDurationS: number;
   whisperVadSpeechPadMs: number;
   whisperVadSamplesOverlap: number;
-  panelStartPosition: "bottom-right" | "center" | "bottom-left";
+  panelStartPosition: "bottom-right" | "center" | "bottom-left" | "top-center";
   showTranscriptionPreview: boolean;
   autoPasteEnabled: boolean;
   keepTranscriptionInClipboard: boolean;
@@ -789,7 +789,9 @@ export interface SettingsState
   setWhisperVadMaxSpeechDurationS: (value: number) => void;
   setWhisperVadSpeechPadMs: (value: number) => void;
   setWhisperVadSamplesOverlap: (value: number) => void;
-  setPanelStartPosition: (position: "bottom-right" | "center" | "bottom-left") => void;
+  setPanelStartPosition: (
+    position: "bottom-right" | "center" | "bottom-left" | "top-center"
+  ) => void;
   setShowTranscriptionPreview: (value: boolean) => void;
   setAutoPasteEnabled: (value: boolean) => void;
   setKeepTranscriptionInClipboard: (value: boolean) => void;
@@ -1168,7 +1170,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   ),
   panelStartPosition: (() => {
     const v = readString("panelStartPosition", "bottom-right");
-    if (v === "bottom-right" || v === "center" || v === "bottom-left") return v;
+    if (v === "bottom-right" || v === "center" || v === "bottom-left" || v === "top-center")
+      return v;
     return "bottom-right" as const;
   })(),
   showTranscriptionPreview: readBoolean("showTranscriptionPreview", false),
@@ -1853,7 +1856,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
       window.electronAPI?.setWhisperVadConfig?.({ samplesOverlap: next });
     }
   },
-  setPanelStartPosition: (position: "bottom-right" | "center" | "bottom-left") => {
+  setPanelStartPosition: (position: "bottom-right" | "center" | "bottom-left" | "top-center") => {
     if (get().panelStartPosition === position) return;
     if (isBrowser) localStorage.setItem("panelStartPosition", position);
     set({ panelStartPosition: position });

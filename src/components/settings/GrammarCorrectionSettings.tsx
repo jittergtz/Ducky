@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../ui/button";
+import { useChatgptSubscription } from "../../hooks/useChatgptSubscription";
 import { HotkeyListInput } from "../ui/HotkeyListInput";
+import { ProviderSettingsLink } from "../ui/ProviderSettingsLink";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { SectionHeader, SettingsPanel, SettingsPanelRow, SettingsRow } from "../ui/SettingsSection";
 
-type Account = Awaited<ReturnType<Window["electronAPI"]["chatgptSubscriptionStatus"]>>;
-type Models = Awaited<ReturnType<Window["electronAPI"]["chatgptSubscriptionModels"]>>;
 type Settings = Awaited<ReturnType<Window["electronAPI"]["getGrammarCorrectionSettings"]>>;
 
 export default function GrammarCorrectionSettings() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<Settings>();
-  const [account, setAccount] = useState<Account>();
-  const [models, setModels] = useState<Models>([]);
+  const { account, models, loading, error: catalogError } = useChatgptSubscription();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const api = window.electronAPI;
@@ -28,18 +26,6 @@ export default function GrammarCorrectionSettings() {
         if (active) setError(t("grammarCorrection.loadFailed"));
       }
     );
-    void (async () => {
-      try {
-        const status = await api.chatgptSubscriptionStatus();
-        if (!active) return;
-        setAccount(status);
-        if (!status.connected) return;
-        const catalog = await api.chatgptSubscriptionModels();
-        if (active) setModels(catalog);
-      } catch {
-        if (active) setError(t("grammarCorrection.loadFailed"));
-      }
-    })();
     return () => {
       active = false;
     };
@@ -73,15 +59,6 @@ export default function GrammarCorrectionSettings() {
       setSettings((current) => current && { ...current, model });
     });
 
-  const refreshAccount = () =>
-    run(async () => {
-      const current = await api.chatgptSubscriptionStatus();
-      const status = current.connected ? current : await api.chatgptSubscriptionSignIn();
-      setAccount(status);
-      setModels([]);
-      if (status.connected) setModels(await api.chatgptSubscriptionModels());
-    });
-
   const selected = models.find((model) => model.value === settings?.model);
 
   return (
@@ -108,24 +85,17 @@ export default function GrammarCorrectionSettings() {
         <SettingsPanelRow>
           <SettingsRow
             label={t("grammarCorrection.account")}
-            description={
-              account?.connected
-                ? t("grammarCorrection.connected", { email: account.email })
-                : t("grammarCorrection.accountHint")
-            }
+            description={t(
+              catalogError
+                ? "providers.chatgpt.loadFailed"
+                : loading
+                  ? "providers.chatgpt.loading"
+                  : account?.connected
+                    ? "providers.chatgpt.connectedHint"
+                    : "providers.chatgpt.connectHint"
+            )}
           >
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" disabled={busy} onClick={refreshAccount}>
-                {t(account?.connected ? "grammarCorrection.refresh" : "grammarCorrection.signIn")}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => api.openExternal("https://chatgpt.com/settings/usage")}
-              >
-                {t("grammarCorrection.manageUsage")}
-              </Button>
-            </div>
+            <ProviderSettingsLink />
           </SettingsRow>
         </SettingsPanelRow>
         <SettingsPanelRow>

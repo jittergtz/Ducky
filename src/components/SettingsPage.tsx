@@ -104,6 +104,7 @@ import { formatBytes } from "../utils/formatBytes";
 import { clearMissingLocalModelSelections, useSettingsStore } from "../stores/settingsStore";
 import { canManageSystemAudioInApp } from "../utils/systemAudioAccess";
 import WorkspaceSection from "./settings/WorkspaceSection";
+import AppIconSettings from "./settings/AppIconSettings";
 import { WORKSPACES_ENABLED, AUTH_DISABLED } from "../lib/features";
 
 const formatAmount = (cents: number, currency: string) =>
@@ -2491,6 +2492,9 @@ export default function SettingsPage({
                     </div>
                   </SettingsRow>
                 </SettingsPanelRow>
+                <SettingsPanelRow>
+                  <AppIconSettings />
+                </SettingsPanelRow>
               </SettingsPanel>
             </div>
 
@@ -2685,7 +2689,7 @@ export default function SettingsPage({
                       value={panelStartPosition}
                       onChange={(e) =>
                         setPanelStartPosition(
-                          e.target.value as "bottom-right" | "center" | "bottom-left"
+                          e.target.value as "bottom-right" | "center" | "bottom-left" | "top-center"
                         )
                       }
                       className="h-7 rounded border border-border/70 bg-surface-1/80 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm hover:border-border-hover hover:bg-surface-2/70 focus:outline-none focus:ring-2 focus:ring-ring/30 focus:ring-offset-1 transition-colors duration-200"
@@ -2698,6 +2702,9 @@ export default function SettingsPage({
                       </option>
                       <option value="bottom-left">
                         {t("settingsPage.general.floatingIcon.bottomLeft")}
+                      </option>
+                      <option value="top-center">
+                        {t("settingsPage.general.floatingIcon.topCenter")}
                       </option>
                     </select>
                   </SettingsRow>
@@ -3192,7 +3199,7 @@ EOF`,
                                     {!item.ok && (
                                       <button
                                         onClick={() => setYdotoolGuideKey(item.key)}
-                                        className="shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-border hover:bg-muted transition-colors text-foreground"
+                                className="shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-border hover:bg-muted transition-colors text-foreground"
                                       >
                                         <BookOpen className="w-3 h-3" />
                                         {t("settingsPage.general.waylandPaste.guide.open", {

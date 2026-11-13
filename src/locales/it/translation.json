@@ -1,4 +1,16 @@
 {
+  "appIcon": {
+    "title": "Icona dell’app",
+    "classic": "Classica",
+    "glacier": "Ghiacciaio",
+    "rose": "Rosa",
+    "macDescription": "Scegli l’icona nel Dock mentre Ducky è in esecuzione. La scelta si applica subito e viene salvata su questo dispositivo.",
+    "windowDescription": "Scegli l’icona delle finestre aperte di Ducky. La scelta si applica subito e viene salvata su questo dispositivo.",
+    "installedNote": "L’app installata e i collegamenti fissati mantengono l’icona standard.",
+    "unsupported": "Qui non è possibile cambiare l’icona dell’app.",
+    "error": "Impossibile caricare o cambiare l’icona. Riprova.",
+    "retry": "Riprova"
+  },
   "settings": {
     "language": {
       "sectionTitle": "Lingua",

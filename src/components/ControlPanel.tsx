@@ -58,6 +58,7 @@ import {
   clearPendingInvitationToken,
 } from "../utils/pendingInvitationToken";
 import { WORKSPACES_ENABLED, AUTH_DISABLED } from "../lib/features";
+import { ProviderNavigationContext } from "../hooks/providerNavigation";
 
 const platform = getCachedPlatform();
 
@@ -69,6 +70,7 @@ const PersonalNotesView = React.lazy(() => import("./notes/PersonalNotesView"));
 const DictionaryView = React.lazy(() => import("./DictionaryView"));
 const UploadAudioView = React.lazy(() => import("./notes/UploadAudioView"));
 const IntegrationsView = React.lazy(() => import("./IntegrationsView"));
+const ProviderView = React.lazy(() => import("./ProviderView"));
 const ChatView = React.lazy(() => import("./chat/ChatView"));
 const GrammarHistoryView = React.lazy(() => import("./GrammarHistoryView"));
 const CommandSearch = React.lazy(() => import("./CommandSearch"));
@@ -733,6 +735,12 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
     return null;
   };
 
+  const openProvider = () => {
+    setActiveView("providers");
+    setShowSettings(false);
+    setSettingsSection(undefined);
+  };
+
   return (
     <div className={`h-screen bg-background flex flex-col${platform === "darwin" ? " control-panel-glass" : ""}`}>
       <MeetingRecordingMount />
@@ -777,14 +785,16 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
 
       {showSettings && (
         <Suspense fallback={null}>
-          <SettingsModal
-            open={showSettings}
-            onOpenChange={(open) => {
-              setShowSettings(open);
-              if (!open) setSettingsSection(undefined);
-            }}
-            initialSection={settingsSection}
-          />
+          <ProviderNavigationContext.Provider value={openProvider}>
+            <SettingsModal
+              open={showSettings}
+              onOpenChange={(open) => {
+                setShowSettings(open);
+                if (!open) setSettingsSection(undefined);
+              }}
+              initialSection={settingsSection}
+            />
+          </ProviderNavigationContext.Provider>
         </Suspense>
       )}
 
@@ -1011,15 +1021,17 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
             )}
             {activeView === "personal-notes" && (
               <Suspense fallback={null}>
-                <PersonalNotesView
-                  onOpenSettings={(section) => {
-                    setSettingsSection(section);
-                    setShowSettings(true);
-                  }}
-                  onOpenSearch={() => setShowSearch(true)}
-                  meetingRecordingRequest={meetingRecordingRequest}
-                  onMeetingRecordingRequestHandled={handleMeetingRecordingRequestHandled}
-                />
+                <ProviderNavigationContext.Provider value={openProvider}>
+                  <PersonalNotesView
+                    onOpenSettings={(section) => {
+                      setSettingsSection(section);
+                      setShowSettings(true);
+                    }}
+                    onOpenSearch={() => setShowSearch(true)}
+                    meetingRecordingRequest={meetingRecordingRequest}
+                    onMeetingRecordingRequestHandled={handleMeetingRecordingRequestHandled}
+                  />
+                </ProviderNavigationContext.Provider>
               </Suspense>
             )}
             {activeView === "dictionary" && (
@@ -1035,6 +1047,18 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
                     if (folderId) setActiveFolderId(folderId);
                     setActiveView("personal-notes");
                   }}
+                  onOpenSettings={(section) => {
+                    setSettingsSection(section);
+                    setShowSettings(true);
+                  }}
+                />
+              </Suspense>
+            )}
+            {activeView === "providers" && (
+              <Suspense fallback={null}>
+                <ProviderView
+                  settingsOpen={showSettings}
+                  cloudEmail={user?.email}
                   onOpenSettings={(section) => {
                     setSettingsSection(section);
                     setShowSettings(true);

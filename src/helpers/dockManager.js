@@ -18,9 +18,9 @@ class DockManager {
 
   // Called once at startup, before any window exists: hides the Dock icon
   // until the control panel opens, so tray-only launches never show one.
-  init() {
+  init(iconPath = getAppIconPath()) {
     if (process.platform === "darwin" && app.dock) {
-      app.dock.setIcon(getAppIconPath());
+      app.dock.setIcon(iconPath);
     }
     this._controlPanelVisible = false;
     this._applyVisibility();

@@ -326,7 +326,7 @@ export function ReferralDashboard() {
         <button
           onClick={fetchStats}
           aria-label={t("referral.tryAgain")}
-          className="px-3.5 py-1.5 rounded-md text-xs font-medium bg-foreground/7 text-foreground/55 border border-foreground/5 hover:bg-foreground/12 hover:text-foreground/90 transition-colors duration-200"
+          className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-foreground/7 text-foreground/55 border border-foreground/5 hover:bg-foreground/12 hover:text-foreground/90 transition-colors duration-200"
         >
           {t("referral.tryAgain")}
         </button>
@@ -427,7 +427,7 @@ export function ReferralDashboard() {
                     onClick={copyLink}
                     aria-label={t("referral.inviteLink.copy")}
                     className={cn(
-                      "shrink-0 h-8 px-3.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-[background-color,color,transform] duration-200 active:scale-[0.97]",
+                      "shrink-0 h-8 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-[background-color,color,transform] duration-200 active:scale-[0.97]",
                       copied
                         ? "bg-neutral-500/15 text-neutral-400/80"
                         : "bg-foreground/7 text-foreground/55 border border-foreground/5 hover:bg-foreground/12 hover:text-foreground/90"
@@ -457,7 +457,7 @@ export function ReferralDashboard() {
                     onClick={sendInvite}
                     disabled={sendingInvite || !emailInput.trim()}
                     aria-label={t("referral.sendInvites.send")}
-                    className="shrink-0 h-8 px-3.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-[background-color,color,transform] duration-200 bg-foreground/7 text-foreground/55 border border-foreground/5 hover:bg-foreground/12 hover:text-foreground/90 active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
+                    className="shrink-0 h-8 px-3.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-[background-color,color,transform] duration-200 bg-foreground/7 text-foreground/55 border border-foreground/5 hover:bg-foreground/12 hover:text-foreground/90 active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
                   >
                     {sendingInvite ? (
                       <div className="w-3 h-3 border-1.5 border-current border-r-transparent rounded-full animate-spin" />

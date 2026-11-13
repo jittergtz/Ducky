@@ -333,10 +333,10 @@ export default function App() {
     <div className="dictation-window ">
       {/* Voice button - position determined by panelStartPosition setting */}
       <div
-        className={`fixed bottom-1  z-50 ${
+        className={`fixed z-50 ${panelStartPosition === "top-center" ? "top-1" : "bottom-1"} ${
           panelStartPosition === "bottom-left"
             ? "left-1"
-            : panelStartPosition === "center"
+            : panelStartPosition === "center" || panelStartPosition === "top-center"
               ? "left-1/2 -translate-x-1/2"
               : "right-1"
         }`}
@@ -478,7 +478,7 @@ export default function App() {
           {isCommandMenuOpen && (
             <div
               ref={commandMenuRef}
-              className="absolute bottom-full right-0 mb-3 w-48 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg backdrop-blur-sm"
+              className={`absolute right-0 w-48 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg backdrop-blur-sm ${panelStartPosition === "top-center" ? "top-full mt-3" : "bottom-full mb-3"}`}
               onMouseEnter={() => {
                 setWindowInteractivity(true);
               }}

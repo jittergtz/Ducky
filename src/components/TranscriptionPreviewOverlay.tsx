@@ -283,7 +283,7 @@ export default function TranscriptionPreviewOverlay() {
               <button
                 onClick={handleCopy}
                 className={[
-                  "inline-flex h-6 items-center gap-1 rounded-md border px-1.5 text-[11px] font-medium transition-colors",
+                  "inline-flex h-6 items-center gap-1 rounded-full border px-1.5 text-[11px] font-medium transition-colors",
                   copied
                     ? "border-neutral-500/15 text-neutral-500/70"
                     : "border-border/30 text-muted-foreground/60 hover:border-border/50 hover:bg-background/40 hover:text-foreground/80",
