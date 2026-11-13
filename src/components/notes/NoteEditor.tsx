@@ -617,19 +617,13 @@ export default function NoteEditor({
     [chatMode, embeddedChat]
   );
 
-  const handleChatInputFocus = useCallback(() => {
-    if (chatMode === "hidden") {
-      setChatMode("floating");
-    }
-  }, [chatMode]);
-
   const noteDate = formatNoteDate(note.created_at);
   const shortDate = formatShortDate(note.created_at);
 
   return (
-    <div className="flex h-full min-h-0">
-      <div className="flex-1 min-w-0 flex flex-col">
-        <div className="px-5 pt-4 pb-0">
+    <div className="note-editor flex h-full min-h-0 min-w-0 bg-background text-foreground">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+        <div className="shrink-0 border-b border-border-subtle px-5 pt-5 pb-4">
           <div
             ref={titleRef}
             contentEditable
@@ -638,14 +632,14 @@ export default function NoteEditor({
             onKeyDown={handleTitleKeyDown}
             onPaste={handleTitlePaste}
             data-placeholder={t("notes.editor.untitled")}
-            className="text-base font-semibold text-foreground bg-transparent outline-none tracking-[-0.01em] empty:before:content-[attr(data-placeholder)] empty:before:text-foreground/15 empty:before:pointer-events-none"
+            className="mx-auto w-full max-w-4xl min-w-0 break-words text-xl font-semibold leading-snug text-foreground bg-transparent outline-none tracking-[-0.02em] empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
             role="textbox"
             aria-label={t("notes.editor.noteTitle")}
           />
-          <div className="flex items-center gap-2 mt-1.5">
+          <div className="mx-auto w-full max-w-4xl flex flex-wrap items-center gap-2 mt-3">
             {shortDate && (
               <span
-                className="inline-flex items-center gap-1.5 text-[11px] text-foreground/50 dark:text-foreground/35"
+                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
                 title={noteDate}
               >
                 <Calendar size={11} className="shrink-0" />
@@ -653,7 +647,7 @@ export default function NoteEditor({
               </span>
             )}
             {calendarEventName && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground/50 dark:text-foreground/35">
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <LinkIcon size={11} className="shrink-0" />
                 <span className="truncate max-w-40">{calendarEventName}</span>
               </span>
@@ -670,9 +664,9 @@ export default function NoteEditor({
                 }}
               >
                 <DropdownMenuTrigger asChild>
-                  <button className="inline-flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded-md border border-border/70 dark:border-white/25 text-foreground/50 dark:text-foreground/35 hover:text-foreground/60 hover:border-border/60 hover:bg-foreground/3 dark:hover:text-foreground/40 dark:hover:border-white/10 dark:hover:bg-white/3 transition-all duration-150 cursor-pointer outline-none">
+                  <button className="inline-flex h-7 max-w-full items-center gap-1.5 px-2 text-xs rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <FolderOpen size={11} className="shrink-0" />
-                    {folderName || t("notes.editor.noFolder")}
+                    <span className="truncate">{folderName || t("notes.editor.noFolder")}</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" sideOffset={6} className="min-w-44 p-1">
@@ -759,17 +753,21 @@ export default function NoteEditor({
               </DropdownMenu>
             )}
             {isSaving && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-foreground/30 dark:text-foreground/15 tabular-nums">
+              <span
+                role="status"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums"
+              >
                 <Loader2 size={8} className="animate-spin" />
                 {t("notes.editor.saving")}
               </span>
             )}
             <div className="flex-1" />
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-2">
               {(enhancement || hasMeetingTranscript || hasChatSegments || isRecording) && (
                 <div
                   ref={segmentContainerRef}
-                  className="relative flex items-center shrink-0 rounded-md bg-foreground/3 dark:bg-white/3 p-0.5"
+                  role="group"
+                  className="relative flex items-center shrink-0 rounded-lg border border-border-subtle bg-surface-1 p-1"
                 >
                   <div
                     className="absolute top-0.5 left-0 rounded bg-background dark:bg-surface-2 shadow-sm transition-[width,height,transform,opacity] duration-200 ease-out pointer-events-none"
@@ -779,12 +777,13 @@ export default function NoteEditor({
                     <button
                       data-segment-button
                       data-segment-value="transcript"
+                      aria-pressed={viewMode === "transcript"}
                       onClick={() => setViewMode("transcript")}
                       className={cn(
                         "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
                         viewMode === "transcript"
-                          ? "text-foreground/60"
-                          : "text-foreground/25 hover:text-foreground/40"
+                          ? "text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       <MessageSquareText size={10} />
@@ -794,12 +793,13 @@ export default function NoteEditor({
                   <button
                     data-segment-button
                     data-segment-value="raw"
+                    aria-pressed={viewMode === "raw"}
                     onClick={() => setViewMode("raw")}
                     className={cn(
                       "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
                       viewMode === "raw"
-                        ? "text-foreground/60"
-                        : "text-foreground/25 hover:text-foreground/40"
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <AlignLeft size={10} />
@@ -809,12 +809,13 @@ export default function NoteEditor({
                     <button
                       data-segment-button
                       data-segment-value="enhanced"
+                      aria-pressed={viewMode === "enhanced"}
                       onClick={() => setViewMode("enhanced")}
                       className={cn(
                         "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
                         viewMode === "enhanced"
-                          ? "text-foreground/60"
-                          : "text-foreground/25 hover:text-foreground/40"
+                          ? "text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       <Sparkles size={9} />
@@ -858,7 +859,7 @@ export default function NoteEditor({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/50 dark:text-foreground/40 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:text-foreground/60 dark:hover:bg-white/8 transition-colors duration-150"
+                      className="shrink-0 h-8 w-8 flex items-center justify-center rounded-lg border border-border-subtle bg-surface-1 text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
                       aria-label={t("notes.editor.export")}
                     >
                       <Download size={11} />
@@ -920,9 +921,8 @@ export default function NoteEditor({
             </div>
           </div>
         </div>
-
-        <div className="flex-1 relative min-h-0">
-          <div className="h-full overflow-y-auto">
+        <div className="flex flex-col flex-1 relative min-h-0">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             {viewMode === "transcript" && (hasChatSegments || isRecording) ? (
               isRecording ? (
                 <LiveMeetingTranscriptChat
@@ -978,12 +978,6 @@ export default function NoteEditor({
             state={actionProcessingState ?? "idle"}
             actionName={actionName ?? null}
           />
-          <div
-            className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
-            style={{
-              background: "linear-gradient(to bottom, transparent, var(--color-background))",
-            }}
-          />
           {!isRecording && selectedSegmentIds.size > 0 && (
             <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
               <SelectionBar
@@ -1002,7 +996,6 @@ export default function NoteEditor({
             onStartRecording={onStartRecording}
             onStopRecording={onStopRecording}
             onAskSubmit={handleAskSubmit}
-            onInputFocus={handleChatInputFocus}
             actionPicker={isRecording ? undefined : actionPicker}
             hideInput={chatMode !== "hidden"}
           />

@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  Blocks,
-  Gift,
-  UserPlus,
-  X,
-  Search,
-  Plug,
-} from "lucide-react";
+import { Blocks, Gift, UserPlus, X, Search, Plug } from "lucide-react";
 import logoIcon from "../assets/icon.png";
 import homeIcon from "../assets/icons/sidebar/home.png";
 import grammarIcon from "../assets/icons/sidebar/grammar.png";
@@ -31,12 +24,19 @@ const platform = getCachedPlatform();
 const rowIconClass =
   "shrink-0 text-foreground/60 group-hover:text-foreground/75 dark:text-foreground/50 dark:group-hover:text-foreground/65 transition-colors duration-150";
 const rowLabelClass =
-  "text-xs text-foreground/80 group-hover:text-foreground dark:text-foreground/70 dark:group-hover:text-foreground/85 transition-colors duration-150";
+  "max-md:sr-only text-xs text-foreground/80 group-hover:text-foreground dark:text-foreground/70 dark:group-hover:text-foreground/85 transition-colors duration-150";
 const rowButtonClass =
-  "group flex items-center gap-2.5 w-full h-8 px-2.5 rounded-md text-left outline-none hover:bg-foreground/4 dark:hover:bg-white/4 focus-visible:ring-1 focus-visible:ring-primary/30 transition-colors duration-150";
+  "group flex items-center gap-2.5 w-full h-9 px-2.5 max-md:justify-center max-md:px-0 rounded-lg text-left outline-none hover:bg-foreground/4 dark:hover:bg-white/4 focus-visible:ring-1 focus-visible:ring-ring transition-colors duration-150";
 
 export type ControlPanelView =
-  "home" | "grammar" | "chat" | "personal-notes" | "dictionary" | "upload" | "providers" | "integrations";
+  | "home"
+  | "grammar"
+  | "chat"
+  | "personal-notes"
+  | "dictionary"
+  | "upload"
+  | "providers"
+  | "integrations";
 
 interface ControlPanelSidebarProps {
   activeView: ControlPanelView;
@@ -103,14 +103,14 @@ export default function ControlPanelSidebar({
   ];
 
   return (
-    <div className="control-panel-sidebar w-48 h-full shrink-0 flex flex-col bg-transparent">
+    <div className="control-panel-sidebar w-full h-full min-h-0 flex flex-col bg-transparent">
       <div
-        className="w-full h-10 shrink-0"
+        className="w-full h-12 shrink-0"
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
       />
 
       {WORKSPACES_ENABLED && isSignedIn && (
-        <div className="px-2 pt-1 pb-1">
+        <div className="px-2 pt-1 pb-1 max-md:hidden">
           <WorkspaceSwitcher userName={userName} />
         </div>
       )}
@@ -119,13 +119,15 @@ export default function ControlPanelSidebar({
         <div className="px-2 pt-2 pb-1">
           <button
             onClick={onOpenSearch}
-            className="group flex items-center w-full h-7 px-2.5 rounded-md border border-border/70 dark:border-white/25 bg-transparent hover:bg-foreground/5 dark:hover:bg-white/5 transition-colors gap-2 outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+            aria-label={t("commandSearch.title")}
+            title={t("commandSearch.shortPlaceholder")}
+            className="group flex items-center w-full h-9 px-2.5 max-md:justify-center max-md:px-0 rounded-lg border border-border-subtle bg-surface-1 hover:bg-muted transition-colors gap-2 outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
-            <Search size={11} className="text-muted-foreground/50 shrink-0" />
-            <span className="flex-1 text-[11px] text-left text-muted-foreground/50">
+            <Search size={14} className="text-muted-foreground shrink-0" />
+            <span className="max-md:hidden flex-1 text-xs text-left text-muted-foreground">
               {t("commandSearch.shortPlaceholder")}
             </span>
-            <div className="flex items-center gap-0.5 shrink-0">
+            <div className="max-md:hidden flex items-center gap-0.5 shrink-0">
               <kbd className="text-[10px] px-1 py-px rounded border border-border/30 dark:border-white/8 bg-muted/40 text-muted-foreground/40 font-mono leading-tight">
                 {platform === "darwin" ? "⌘" : "Ctrl"}
               </kbd>
@@ -137,7 +139,10 @@ export default function ControlPanelSidebar({
         </div>
       )}
 
-      <nav className="flex flex-col gap-0.5 px-2 pt-2 pb-2">
+      <nav
+        aria-label={t("common.navigation", "Navigation")}
+        className="flex flex-col gap-1 px-2 pt-2 pb-2 overflow-y-auto"
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
@@ -145,10 +150,12 @@ export default function ControlPanelSidebar({
           return (
             <button
               key={item.id}
+              aria-label={item.label}
+              title={item.label}
               aria-current={isActive ? "page" : undefined}
               onClick={() => onViewChange(item.id)}
               className={cn(
-                "group relative flex items-center gap-2.5 w-full h-8 px-2.5 rounded-md outline-none transition-colors duration-150 text-left",
+                "group relative flex shrink-0 items-center gap-2.5 w-full h-9 px-2.5 max-md:justify-center max-md:px-0 rounded-lg outline-none transition-colors duration-150 text-left",
                 "focus-visible:ring-1 focus-visible:ring-primary/30",
                 isActive
                   ? "bg-primary/8 dark:bg-primary/10"
@@ -172,7 +179,7 @@ export default function ControlPanelSidebar({
               </span>
               <span
                 className={cn(
-                  "text-xs transition-colors duration-150",
+                  "max-md:sr-only text-xs transition-colors duration-150",
                   isActive
                     ? "text-foreground font-medium"
                     : "text-foreground/80 group-hover:text-foreground dark:text-foreground/75 dark:group-hover:text-foreground/90"
@@ -188,7 +195,7 @@ export default function ControlPanelSidebar({
       <div className="flex-1" />
 
       {showLimitBanner && (
-        <div className="px-2 pb-2">
+        <div className="px-2 pb-2 max-md:hidden">
           <div className="rounded-lg border border-transparent bg-card/50 dark:border-destructive/25 dark:bg-destructive/10 p-3">
             <div className="flex flex-col items-center text-center">
               <img src={logoIcon} alt="" className="w-7 h-7 rounded-md mb-2" />
@@ -210,7 +217,7 @@ export default function ControlPanelSidebar({
       )}
 
       {showUpgradeBanner && (
-        <div className="px-2 pb-2">
+        <div className="px-2 pb-2 max-md:hidden">
           <div className="relative rounded-lg border border-transparent bg-card/50 dark:border-primary/20 dark:bg-primary/10 p-3">
             <button
               onClick={() => {

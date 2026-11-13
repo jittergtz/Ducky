@@ -11,7 +11,8 @@ import { SettingsProvider } from "./hooks/useSettings";
 import i18n from "./i18n";
 import "./index.css";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+// Keep a single React root when the entry module is replaced during development.
+const root = import.meta.hot?.data.root ?? ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
@@ -29,5 +30,6 @@ root.render(
 );
 
 if (import.meta.hot) {
+  import.meta.hot.data.root = root;
   import.meta.hot.accept();
 }

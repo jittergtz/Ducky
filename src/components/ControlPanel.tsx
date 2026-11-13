@@ -1,14 +1,7 @@
 import React, { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
-import {
-  Download,
-  RefreshCw,
-  Loader2,
-  AlertTriangle,
-  Zap,
-  ChevronLeft,
-} from "lucide-react";
+import { Download, RefreshCw, Loader2, AlertTriangle, Zap, ChevronLeft } from "lucide-react";
 import UpgradePrompt from "./UpgradePrompt";
 import PostMigrationOnboarding from "./PostMigrationOnboarding";
 import { ConfirmDialog, AlertDialog } from "./ui/dialog";
@@ -28,11 +21,7 @@ import {
   clearTranscriptions as clearStore,
 } from "../stores/transcriptionStore";
 import { useSettingsStore } from "../stores/settingsStore";
-import {
-  useIsMeetingMode,
-  useIsNarrowWindow,
-  useMeetingRecordingStore,
-} from "../stores/meetingRecordingStore";
+import { useIsNarrowWindow, useMeetingRecordingStore } from "../stores/meetingRecordingStore";
 import ControlPanelSidebar, { type ControlPanelView } from "./ControlPanelSidebar";
 import MeetingRecordingMount from "./MeetingRecordingMount";
 import MeetingRecordingPill from "./notes/MeetingRecordingPill";
@@ -61,8 +50,6 @@ import { WORKSPACES_ENABLED, AUTH_DISABLED } from "../lib/features";
 import { ProviderNavigationContext } from "../hooks/providerNavigation";
 
 const platform = getCachedPlatform();
-
-const SIDEBAR_WIDTH_PX = 192;
 
 const SettingsModal = React.lazy(() => import("./SettingsModal"));
 const ReferralModal = React.lazy(() => import("./ReferralModal"));
@@ -101,11 +88,10 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
   const showDiscarded = useShowDiscarded();
   const [showCloudMigrationBanner, setShowCloudMigrationBanner] = useState(false);
   const [activeView, setActiveView] = useState<ControlPanelView>("home");
-  const isMeetingMode = useIsMeetingMode();
   const isNarrowWindow = useIsNarrowWindow();
   const activeNoteId = useActiveNoteId();
-  const isSidePanelLayout =
-    isMeetingMode || (isNarrowWindow && activeView === "personal-notes" && activeNoteId != null);
+  const isCompactNoteLayout =
+    isNarrowWindow && activeView === "personal-notes" && activeNoteId != null;
   const recordingNoteId = useMeetingRecordingStore((s) => s.recordingNoteId);
   const recordingFolderId = useMeetingRecordingStore((s) => s.recordingFolderId);
   const [meetingRecordingRequest, setMeetingRecordingRequest] = useState<{
@@ -410,8 +396,8 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
     []
   );
 
-  const handleExitMeetingMode = useCallback(() => {
-    window.electronAPI?.restoreFromMeetingMode?.();
+  const handleBackToNotes = useCallback(() => {
+    setActiveNoteId(null);
   }, []);
 
   const copyToClipboard = useCallback(
@@ -742,7 +728,9 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
   };
 
   return (
-    <div className={`h-screen bg-background flex flex-col${platform === "darwin" ? " control-panel-glass" : ""}`}>
+    <div
+      className={`h-screen bg-background flex flex-col${platform === "darwin" ? " control-panel-glass" : ""}`}
+    >
       <MeetingRecordingMount />
       <MeetingRecordingPill
         activeView={activeView}
@@ -833,15 +821,8 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
         </Suspense>
       )}
 
-      <div className="flex flex-1 overflow-hidden relative">
-        <div
-          className="shrink-0 transition-[width] duration-300 ease-out"
-          style={{ width: isSidePanelLayout ? 0 : SIDEBAR_WIDTH_PX }}
-        />
-        <div
-          className="absolute inset-y-0 left-0 z-30 transition-transform duration-300 ease-out"
-          style={{ transform: isSidePanelLayout ? "translateX(-100%)" : "translateX(0)" }}
-        >
+      <div className="flex min-h-0 flex-1 overflow-hidden relative">
+        <div className="z-30 w-48 max-md:w-16 shrink-0 border-r border-border-subtle">
           <ControlPanelSidebar
             activeView={activeView}
             onViewChange={setActiveView}
@@ -880,21 +861,18 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
             }
           />
         </div>
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="min-w-0 min-h-0 flex-1 flex flex-col overflow-hidden">
           <div
-            className="flex items-center justify-between w-full h-10 shrink-0"
+            className={`flex items-center justify-between w-full h-12 shrink-0 px-4${platform === "darwin" ? " max-md:pl-8" : ""}`}
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
           >
-            {isSidePanelLayout && (
-              <div
-                className={platform === "darwin" ? "ml-[84px] mt-[16px]" : "ml-2"}
-                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-              >
+            {isCompactNoteLayout && (
+              <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
                 <Button
-                  variant="outline-flat"
+                  variant="ghost"
                   size="sm"
-                  onClick={handleExitMeetingMode}
-                  className="h-7 px-2.5 pl-1.5 gap-1"
+                  onClick={handleBackToNotes}
+                  className="h-8 px-2.5 pl-1.5 gap-1 text-foreground"
                 >
                   <ChevronLeft size={14} strokeWidth={1.8} />
                   {t("controlPanel.backToNotes")}
@@ -908,7 +886,13 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
               </div>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto pt-1">
+          <div
+            className={
+              activeView === "personal-notes"
+                ? "flex-1 min-h-0 overflow-hidden"
+                : "flex-1 min-h-0 overflow-y-auto pt-1"
+            }
+          >
             {usage?.isPastDue && activeView === "home" && (
               <div className="max-w-3xl mx-auto w-full mb-3">
                 <div className="rounded-lg border border-transparent dark:border-neutral-800 bg-card/50 dark:bg-neutral-950/50 p-3">

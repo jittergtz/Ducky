@@ -70,7 +70,6 @@ import {
 } from "../../stores/noteStore";
 import {
   useMeetingRecordingStore,
-  useIsMeetingMode,
   useIsNarrowWindow,
   startRecording as storeStartRecording,
   stopRecording as storeStopRecording,
@@ -106,12 +105,11 @@ export default function PersonalNotesView({
   meetingRecordingRequest,
   onMeetingRecordingRequestHandled,
 }: PersonalNotesViewProps) {
-  const isMeetingMode = useIsMeetingMode();
   const isNarrowWindow = useIsNarrowWindow();
   const { t } = useTranslation();
   const notes = useNotes();
   const activeNoteId = useActiveNoteId();
-  const isSidePanelLayout = isMeetingMode || (isNarrowWindow && activeNoteId != null);
+  const isSidePanelLayout = isNarrowWindow && activeNoteId != null;
   const activeFolderId = useActiveFolderId();
   const [isSaving, setIsSaving] = useState(false);
   const [localTitle, setLocalTitle] = useState("");
@@ -236,26 +234,35 @@ export default function PersonalNotesView({
     await storeStopRecording();
   }, []);
 
+  // Navigation must flush the debounce before the editor is reset or unmounted.
+  const flushPendingSave = useCallback(() => {
+    const noteId = activeNoteRef.current;
+    const updates: { title?: string; content?: string; enhanced_content?: string | null } = {};
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+      updates.title = localTitleRef.current;
+      updates.content = localContentRef.current;
+    }
+    if (enhancedSaveTimeoutRef.current) {
+      clearTimeout(enhancedSaveTimeoutRef.current);
+      enhancedSaveTimeoutRef.current = null;
+      updates.enhanced_content = localEnhancedContentRef.current;
+    }
+    if (noteId && Object.keys(updates).length) {
+      void window.electronAPI.updateNote(noteId, updates).catch((err: unknown) => {
+        logger.warn(
+          "Failed to save note on navigation",
+          { error: (err as Error).message },
+          "notes"
+        );
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (activeNote && activeNote.id !== activeNoteRef.current) {
-      // --- Switching notes ---
-      // 1. Capture old note state before anything changes
-      const oldNoteId = activeNoteRef.current;
-      const oldTitle = localTitleRef.current;
-      const oldContent = localContentRef.current;
-      const hadPendingSave = !!saveTimeoutRef.current;
-
-      // 2. Clear all pending timers
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = null;
-      }
-      if (enhancedSaveTimeoutRef.current) {
-        clearTimeout(enhancedSaveTimeoutRef.current);
-        enhancedSaveTimeoutRef.current = null;
-      }
-
-      // 3. Switch to new note IMMEDIATELY (no await, eliminates race window)
+      flushPendingSave();
       markNoteAsSynced(activeNote.id);
       setLocalTitle(activeNote.title);
       setLocalContent(activeNote.content);
@@ -263,41 +270,25 @@ export default function PersonalNotesView({
       // Also update refs directly so callbacks are correct before next render
       localTitleRef.current = activeNote.title;
       localContentRef.current = activeNote.content;
-
-      // 4. Flush old note data fire-and-forget (uses captured values, not refs)
-      if (hadPendingSave && oldNoteId) {
-        window.electronAPI
-          .updateNote(oldNoteId, { title: oldTitle, content: oldContent })
-          .catch((err: unknown) => {
-            logger.warn(
-              "Failed to flush note on switch",
-              { error: (err as Error).message },
-              "notes"
-            );
-          });
-      }
+      localEnhancedContentRef.current = activeNote.enhanced_content ?? null;
     } else if (activeNote && activeNote.id === activeNoteRef.current && !saveTimeoutRef.current) {
       // External update (e.g. AI chat tool) — resync only when no user save is pending
       if (activeNote.title !== localTitleRef.current) setLocalTitle(activeNote.title);
       if (activeNote.content !== localContentRef.current) setLocalContent(activeNote.content);
-      if ((activeNote.enhanced_content ?? null) !== localEnhancedContentRef.current) {
+      if (
+        !enhancedSaveTimeoutRef.current &&
+        (activeNote.enhanced_content ?? null) !== localEnhancedContentRef.current
+      ) {
         setLocalEnhancedContent(activeNote.enhanced_content ?? null);
       }
     } else if (!activeNote) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = null;
-      }
-      if (enhancedSaveTimeoutRef.current) {
-        clearTimeout(enhancedSaveTimeoutRef.current);
-        enhancedSaveTimeoutRef.current = null;
-      }
+      flushPendingSave();
       markNoteAsSynced(null);
       setLocalTitle("");
       setLocalContent("");
       setLocalEnhancedContent(null);
     }
-  }, [activeNote]);
+  }, [activeNote, flushPendingSave]);
 
   const debouncedSave = useCallback((noteId: number, title: string, content: string) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -315,14 +306,16 @@ export default function PersonalNotesView({
   }, []);
 
   useEffect(() => {
+    window.addEventListener("beforeunload", flushPendingSave);
     return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-      if (enhancedSaveTimeoutRef.current) clearTimeout(enhancedSaveTimeoutRef.current);
+      window.removeEventListener("beforeunload", flushPendingSave);
+      flushPendingSave();
     };
-  }, []);
+  }, [flushPendingSave]);
 
   const handleTitleChange = useCallback(
     (title: string) => {
+      localTitleRef.current = title;
       setLocalTitle(title);
       if (activeNoteRef.current)
         debouncedSave(activeNoteRef.current, title, localContentRef.current);
@@ -332,6 +325,7 @@ export default function PersonalNotesView({
 
   const handleContentChange = useCallback(
     (content: string) => {
+      localContentRef.current = content;
       setLocalContent(content);
       if (activeNoteRef.current)
         debouncedSave(activeNoteRef.current, localTitleRef.current, content);
@@ -340,6 +334,7 @@ export default function PersonalNotesView({
   );
 
   const handleEnhancedContentChange = useCallback((content: string) => {
+    localEnhancedContentRef.current = content;
     setLocalEnhancedContent(content);
     if (!activeNoteRef.current) return;
     const noteId = activeNoteRef.current;
@@ -572,12 +567,14 @@ export default function PersonalNotesView({
   }
 
   return (
-    <div className="flex h-full">
+    <div className="notes-workspace flex h-full min-h-0 min-w-0 bg-background text-foreground">
       <div
-        className="shrink-0 overflow-hidden transition-[width] duration-300 ease-out"
-        style={{ width: isSidePanelLayout ? 0 : "13rem" }}
+        inert={isSidePanelLayout}
+        aria-hidden={isSidePanelLayout}
+        className="shrink-0 min-h-0 overflow-hidden transition-[width] duration-200 ease-out"
+        style={{ width: isSidePanelLayout ? 0 : isNarrowWindow ? "100%" : "15rem" }}
       >
-        <div className="w-52 shrink-0 border-r border-border/15 dark:border-white/4 flex flex-col h-full">
+        <div className="w-full min-w-52 border-r border-border-subtle bg-surface-1 flex flex-col h-full min-h-0">
           <div className="px-2 pt-2 pb-1 shrink-0 space-y-0.5">
             <button
               onClick={handleOpenNewNoteDialog}
@@ -621,7 +618,7 @@ export default function PersonalNotesView({
 
           {/* Folders */}
           <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-foreground/50 dark:text-foreground/25">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t("notes.folders.title")}
             </span>
             <Button
@@ -629,7 +626,7 @@ export default function PersonalNotesView({
               size="icon"
               onClick={() => setIsCreatingFolder(true)}
               aria-label={t("notes.context.newFolder")}
-              className="h-5 w-5 rounded-md text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-foreground/60 hover:bg-foreground/5"
+              className="h-5 w-5 rounded-md text-muted-foreground hover:text-foreground/60 hover:bg-foreground/5"
             >
               <Plus size={13} />
             </Button>
@@ -690,7 +687,7 @@ export default function PersonalNotesView({
                       "shrink-0 transition-colors duration-150",
                       isDragOver || isActive
                         ? "text-primary"
-                        : "text-foreground/35 dark:text-foreground/20 group-hover:text-foreground/50 dark:group-hover:text-foreground/35"
+                        : "text-muted-foreground group-hover:text-foreground"
                     )}
                   />
                   <span
@@ -713,9 +710,7 @@ export default function PersonalNotesView({
                     <span
                       className={cn(
                         "text-xs tabular-nums shrink-0 transition-colors group-hover:opacity-0",
-                        isActive
-                          ? "text-foreground/50 dark:text-foreground/30"
-                          : "text-foreground/35 dark:text-foreground/15"
+                        isActive ? "text-muted-foreground" : "text-muted-foreground"
                       )}
                     >
                       {count > 0 ? count : ""}
@@ -805,7 +800,7 @@ export default function PersonalNotesView({
 
           {/* Notes list */}
           <div className="flex items-center justify-between px-3 py-1">
-            <span className="text-xs font-medium uppercase tracking-wider text-foreground/50 dark:text-foreground/25">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t("notes.list.title")}
             </span>
             <Button
@@ -813,7 +808,7 @@ export default function PersonalNotesView({
               size="icon"
               onClick={handleNewNote}
               aria-label={t("notes.list.newNote")}
-              className="h-5 w-5 rounded-md text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-foreground/60 hover:bg-foreground/5"
+              className="h-5 w-5 rounded-md text-muted-foreground hover:text-foreground/60 hover:bg-foreground/5"
             >
               <Plus size={13} />
             </Button>
@@ -884,9 +879,7 @@ export default function PersonalNotesView({
                     fillOpacity={0.04}
                   />
                 </svg>
-                <p className="text-xs text-foreground/50 dark:text-foreground/25 mb-3">
-                  {t("notes.empty.emptyFolder")}
-                </p>
+                <p className="text-xs text-muted-foreground mb-3">{t("notes.empty.emptyFolder")}</p>
                 <div className="flex flex-col gap-1.5 w-full max-w-36">
                   <button
                     onClick={handleNewNote}
@@ -925,7 +918,12 @@ export default function PersonalNotesView({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div
+        className={cn(
+          "flex-1 flex flex-col min-w-0 min-h-0",
+          isNarrowWindow && !activeNote && "hidden"
+        )}
+      >
         {editorNote ? (
           <>
             <NoteEditor
@@ -1130,7 +1128,7 @@ export default function PersonalNotesView({
                 <h3 className="text-xs font-semibold text-foreground/60 mb-1">
                   {t("notes.empty.title")}
                 </h3>
-                <p className="text-xs text-foreground/50 dark:text-foreground/25 text-center max-w-55 mb-4">
+                <p className="text-xs text-muted-foreground text-center max-w-55 mb-4">
                   {t("notes.empty.description")}
                 </p>
                 <div className="flex items-center gap-2">
@@ -1154,7 +1152,7 @@ export default function PersonalNotesView({
                 <h3 className="text-xs font-semibold text-foreground/60 mb-1">
                   {t("notes.empty.selectTitle")}
                 </h3>
-                <p className="text-xs text-foreground/50 dark:text-foreground/25 text-center max-w-50">
+                <p className="text-xs text-muted-foreground text-center max-w-50">
                   {t("notes.empty.selectDescription")}
                 </p>
               </>

@@ -135,7 +135,7 @@ export default function NoteListItem({
             {note.title || t("notes.list.untitled")}
           </p>
           <div className="flex items-center gap-0.5 shrink-0">
-            <span className="text-xs text-muted-foreground dark:text-muted-foreground/30 tabular-nums group-hover:opacity-0 transition-opacity">
+            <span className="text-xs text-muted-foreground tabular-nums group-hover:opacity-0 transition-opacity">
               {relativeTime(note.updated_at, t)}
             </span>
             <DropdownMenu
@@ -283,7 +283,7 @@ export default function NoteListItem({
           </div>
         </div>
         {preview && (
-          <p className="text-xs text-muted-foreground/80 dark:text-muted-foreground/40 line-clamp-1 mt-0.5">
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
             {preview}
           </p>
         )}

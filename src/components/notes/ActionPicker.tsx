@@ -50,26 +50,22 @@ export default function ActionPicker({
   if (!activeAction) return null;
 
   return (
-    <div className="flex items-center shrink-0">
+    <div className="flex items-center shrink-0 overflow-hidden rounded-lg border border-border bg-muted text-foreground">
       <button
         onClick={() => handleRun(activeAction)}
         disabled={disabled}
         aria-label={t("notes.actions.runAction", { name: getActionName(activeAction, t) })}
         className={cn(
-          "flex items-center gap-1.5 h-7 pl-2.5 pr-1.5 rounded-l-lg",
-          "bg-accent/6 dark:bg-accent/10",
-          "text-accent/60 dark:text-accent/50",
+          "flex items-center gap-2 h-9 pl-3 pr-2",
+          "text-foreground",
           "transition-colors duration-150",
-          "hover:bg-accent/10 dark:hover:bg-accent/15",
-          "hover:text-accent/80 dark:hover:text-accent/70",
+          "hover:bg-foreground/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           "active:scale-[0.98]",
-          "disabled:opacity-30 disabled:pointer-events-none"
+          "disabled:opacity-50 disabled:pointer-events-none"
         )}
       >
-        <Sparkles size={11} />
-        <span className="text-[11px] font-semibold tracking-tight">
-          {getActionName(activeAction, t)}
-        </span>
+        <Sparkles size={13} />
+        <span className="text-xs font-medium">{getActionName(activeAction, t)}</span>
       </button>
 
       <DropdownMenu>
@@ -78,13 +74,11 @@ export default function ActionPicker({
             disabled={disabled}
             aria-label={t("notes.actions.selectAction")}
             className={cn(
-              "flex items-center justify-center h-7 w-5 rounded-r-lg",
-              "bg-accent/6 dark:bg-accent/10",
-              "text-accent/35 dark:text-accent/25",
+              "flex items-center justify-center h-9 w-7 border-l border-border",
+              "text-muted-foreground",
               "transition-colors duration-150",
-              "hover:bg-accent/10 dark:hover:bg-accent/15",
-              "hover:text-accent/60",
-              "disabled:opacity-30 disabled:pointer-events-none"
+              "hover:bg-foreground/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "disabled:opacity-50 disabled:pointer-events-none"
             )}
           >
             <ChevronDown size={10} />
@@ -97,14 +91,14 @@ export default function ActionPicker({
               onClick={() => handleRun(action)}
               className={cn(
                 "text-xs gap-2.5 rounded-md px-2.5 py-1.5",
-                action.id === activeAction.id && "bg-accent/5"
+                action.id === activeAction.id && "bg-muted"
               )}
             >
-              <Sparkles size={12} className="text-accent/50 shrink-0" />
+              <Sparkles size={12} className="text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{getActionName(action, t)}</div>
                 {action.description && (
-                  <div className="text-xs text-muted-foreground/50 truncate">
+                  <div className="text-xs text-muted-foreground truncate">
                     {getActionDescription(action, t)}
                   </div>
                 )}
@@ -114,7 +108,7 @@ export default function ActionPicker({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={onManageActions}
-            className="text-xs gap-2.5 rounded-md px-2.5 py-1.5 text-muted-foreground/60"
+            className="text-xs gap-2.5 rounded-md px-2.5 py-1.5 text-muted-foreground"
           >
             <Settings2 size={12} />
             {t("notes.actions.manage")}
