@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { Blocks, Gift, UserPlus, X, Search, Plug } from "lucide-react";
+import { Blocks, Gift, UserPlus, X, Search } from "lucide-react";
 import logoIcon from "../assets/icon.png";
 import homeIcon from "../assets/icons/sidebar/home.png";
 import grammarIcon from "../assets/icons/sidebar/grammar.png";
 import chatIcon from "../assets/icons/sidebar/chat.png";
 import notesIcon from "../assets/icons/sidebar/notes.png";
-import uploadIcon from "../assets/icons/sidebar/upload.png";
 import dictionaryIcon from "../assets/icons/sidebar/dictionary.png";
 import settingsIcon from "../assets/icons/sidebar/settings.png";
 import supportIcon from "../assets/icons/sidebar/support.png";
+import providerIcon from "../assets/icons/sidebar/provider.png";
 import { useTranslation } from "react-i18next";
 import { cn } from "./lib/utils";
 import { createExternalLinkHandler } from "../utils/externalLinks";
@@ -23,10 +23,9 @@ const platform = getCachedPlatform();
 
 const rowIconClass =
   "shrink-0 text-foreground/60 group-hover:text-foreground/75 dark:text-foreground/50 dark:group-hover:text-foreground/65 transition-colors duration-150";
-const rowLabelClass =
-  "max-md:sr-only text-xs text-foreground/80 group-hover:text-foreground dark:text-foreground/70 dark:group-hover:text-foreground/85 transition-colors duration-150";
+const rowLabelClass = "sr-only";
 const rowButtonClass =
-  "group flex items-center gap-2.5 w-full h-9 px-2.5 max-md:justify-center max-md:px-0 rounded-lg text-left outline-none hover:bg-foreground/4 dark:hover:bg-white/4 focus-visible:ring-1 focus-visible:ring-ring transition-colors duration-150";
+  "group flex items-center gap-2.5 w-full h-9 justify-center px-0 rounded-xl text-left outline-none hover:bg-foreground/4 dark:hover:bg-white/4 focus-visible:ring-1 focus-visible:ring-ring transition-colors duration-150";
 
 export type ControlPanelView =
   | "home"
@@ -73,6 +72,7 @@ export default function ControlPanelSidebar({
   const [upgradeDismissed, setUpgradeDismissed] = useState(
     () => localStorage.getItem("upgradeProDismissed") === "true"
   );
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
   const { active: activeWorkspace } = useWorkspace();
@@ -96,22 +96,35 @@ export default function ControlPanelSidebar({
     { id: "grammar", label: t("sidebar.grammar"), image: grammarIcon },
     { id: "chat", label: t("sidebar.chat"), image: chatIcon },
     { id: "personal-notes", label: t("sidebar.notes"), image: notesIcon },
-    { id: "upload", label: t("sidebar.upload"), image: uploadIcon },
     { id: "dictionary", label: t("sidebar.dictionary"), image: dictionaryIcon },
-    { id: "providers", label: t("sidebar.provider"), icon: Plug },
+    { id: "providers", label: t("sidebar.provider"), image: providerIcon },
     { id: "integrations", label: t("sidebar.integrations"), icon: Blocks },
   ];
 
   return (
-    <div className="control-panel-sidebar w-full h-full min-h-0 flex flex-col bg-transparent">
+    <div className="control-panel-sidebar relative w-full h-full min-h-0 flex flex-col rounded-[18px] bg-neutral-100 dark:bg-[#080808]">
       <div
         className="w-full h-12 shrink-0"
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
       />
 
       {WORKSPACES_ENABLED && isSignedIn && (
-        <div className="px-2 pt-1 pb-1 max-md:hidden">
-          <WorkspaceSwitcher userName={userName} />
+        <div className="relative px-2 pb-1">
+          <button
+            type="button"
+            onClick={() => setWorkspaceOpen((open) => !open)}
+            aria-label={activeWorkspace?.name || t("sidebar.createWorkspace")}
+            title={activeWorkspace?.name || t("sidebar.createWorkspace")}
+            aria-expanded={workspaceOpen}
+            className={rowButtonClass}
+          >
+            <Blocks size={15} className={rowIconClass} />
+          </button>
+          {workspaceOpen && (
+            <div className="absolute left-full top-0 z-50 ml-2 w-52 rounded-2xl bg-popover p-2 shadow-xl border border-border">
+              <WorkspaceSwitcher userName={userName} />
+            </div>
+          )}
         </div>
       )}
 
@@ -121,13 +134,11 @@ export default function ControlPanelSidebar({
             onClick={onOpenSearch}
             aria-label={t("commandSearch.title")}
             title={t("commandSearch.shortPlaceholder")}
-            className="group flex items-center w-full h-9 px-2.5 max-md:justify-center max-md:px-0 rounded-lg border border-border-subtle bg-surface-1 hover:bg-muted transition-colors gap-2 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="group flex items-center justify-center w-full h-9 rounded-xl hover:bg-foreground/5 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             <Search size={14} className="text-muted-foreground shrink-0" />
-            <span className="max-md:hidden flex-1 text-xs text-left text-muted-foreground">
-              {t("commandSearch.shortPlaceholder")}
-            </span>
-            <div className="max-md:hidden flex items-center gap-0.5 shrink-0">
+            <span className="sr-only">{t("commandSearch.shortPlaceholder")}</span>
+            <div className="hidden">
               <kbd className="text-[10px] px-1 py-px rounded border border-border/30 dark:border-white/8 bg-muted/40 text-muted-foreground/40 font-mono leading-tight">
                 {platform === "darwin" ? "⌘" : "Ctrl"}
               </kbd>
@@ -155,10 +166,10 @@ export default function ControlPanelSidebar({
               aria-current={isActive ? "page" : undefined}
               onClick={() => onViewChange(item.id)}
               className={cn(
-                "group relative flex shrink-0 items-center gap-2.5 w-full h-9 px-2.5 max-md:justify-center max-md:px-0 rounded-lg outline-none transition-colors duration-150 text-left",
+                "group relative flex shrink-0 items-center justify-center w-full h-9 rounded-xl outline-none transition-colors duration-150 text-left",
                 "focus-visible:ring-1 focus-visible:ring-primary/30",
                 isActive
-                  ? "bg-primary/8 dark:bg-primary/10"
+                  ? "bg-black/10 dark:bg-white/10"
                   : "hover:bg-foreground/4 dark:hover:bg-white/4 active:bg-foreground/6"
               )}
             >
@@ -179,7 +190,7 @@ export default function ControlPanelSidebar({
               </span>
               <span
                 className={cn(
-                  "max-md:sr-only text-xs transition-colors duration-150",
+                  "sr-only text-xs transition-colors duration-150",
                   isActive
                     ? "text-foreground font-medium"
                     : "text-foreground/80 group-hover:text-foreground dark:text-foreground/75 dark:group-hover:text-foreground/90"
@@ -194,63 +205,39 @@ export default function ControlPanelSidebar({
 
       <div className="flex-1" />
 
-      {showLimitBanner && (
-        <div className="px-2 pb-2 max-md:hidden">
-          <div className="rounded-lg border border-transparent bg-card/50 dark:border-destructive/25 dark:bg-destructive/10 p-3">
-            <div className="flex flex-col items-center text-center">
-              <img src={logoIcon} alt="" className="w-7 h-7 rounded-md mb-2" />
-              <p className="text-xs font-medium text-foreground mb-0.5">
-                {t("sidebar.limitReached")}
-              </p>
-              <p className="text-[11px] leading-snug text-muted-foreground mb-2.5">
-                {t("sidebar.limitReachedDescription")}
-              </p>
-              <button
-                onClick={onUpgrade}
-                className="w-full h-7 rounded-full bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-              >
-                {t("sidebar.viewPlans")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showUpgradeBanner && (
-        <div className="px-2 pb-2 max-md:hidden">
-          <div className="relative rounded-lg border border-transparent bg-card/50 dark:border-primary/20 dark:bg-primary/10 p-3">
+      {(showLimitBanner || showUpgradeBanner) && onUpgrade && (
+        <div className="group/upgrade relative px-2 pb-1">
+          <button
+            onClick={onUpgrade}
+            className={rowButtonClass}
+            aria-label={t(showLimitBanner ? "sidebar.viewPlans" : "sidebar.upgradeTitle")}
+            title={t(showLimitBanner ? "sidebar.viewPlans" : "sidebar.upgradeTitle")}
+          >
+            <img src={logoIcon} alt="" className="size-5 shrink-0 rounded-md" />
+          </button>
+          {showUpgradeBanner && (
             <button
+              type="button"
+              aria-label={t("common.dismiss")}
+              title={t("common.dismiss")}
               onClick={() => {
                 setUpgradeDismissed(true);
                 localStorage.setItem("upgradeProDismissed", "true");
               }}
-              aria-label={t("common.dismiss")}
-              className="absolute top-1.5 right-1.5 p-0.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              className="absolute right-1 top-0 rounded-full bg-surface-3 p-0.5 text-muted-foreground opacity-0 group-hover/upgrade:opacity-100 focus-visible:opacity-100"
             >
-              <X size={12} />
+              <X size={10} />
             </button>
-            <div className="flex flex-col items-center text-center pt-1">
-              <img src={logoIcon} alt="" className="w-7 h-7 rounded-md mb-2" />
-              <p className="text-xs font-medium text-foreground mb-0.5">
-                {t("sidebar.upgradeTitle")}
-              </p>
-              <p className="text-[11px] leading-snug text-muted-foreground mb-2.5">
-                {t("sidebar.upgradeDescription")}
-              </p>
-              <button
-                onClick={onUpgrade}
-                className="w-full h-7 rounded-full bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-              >
-                {t("sidebar.learnMore")}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
       <div className="px-2 pb-2 space-y-0.5">
         {updateAction && (
-          <div className="px-1 pb-1" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+          <div
+            className="sidebar-update px-1 pb-1"
+            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          >
             {updateAction}
           </div>
         )}
@@ -284,6 +271,7 @@ export default function ControlPanelSidebar({
         <button
           onClick={onOpenSettings}
           aria-label={t("sidebar.settings")}
+          title={t("sidebar.settings")}
           className={rowButtonClass}
         >
           <img src={settingsIcon} alt="" className="size-5 shrink-0" />
@@ -296,6 +284,7 @@ export default function ControlPanelSidebar({
           rel="noopener noreferrer"
           onClick={createExternalLinkHandler("https://github.com/jittergtz/spoken")}
           aria-label={t("sidebar.support")}
+          title={t("sidebar.support")}
           className={rowButtonClass}
         >
           <img src={supportIcon} alt="" className="size-5 shrink-0" />

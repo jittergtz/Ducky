@@ -364,6 +364,7 @@
       "updatePayment": "更新支付方式"
     },
     "history": {
+      "title": "历史记录",
       "couldNotLoadTitle": "无法加载历史记录",
       "couldNotLoadDescription": "加载转录记录时出错，请尝试关闭并重新打开应用。",
       "copiedTitle": "已复制！",

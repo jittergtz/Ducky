@@ -30,7 +30,9 @@ const FLOATING_OVERLAY_TYPE =
       : "normal";
 
 const WINDOW_SIZES = {
-  BASE: { width: 96, height: 96 },
+  // Keep enough width for the hover pill on macOS so hover never resizes the
+  // native window while the compositor is presenting the collapse animation.
+  BASE: { width: process.platform === "darwin" ? 280 : 96, height: 96 },
   WITH_MENU: { width: 240, height: 280 },
   WITH_TOAST: { width: 400, height: 500 },
   EXPANDED: { width: 400, height: 500 },

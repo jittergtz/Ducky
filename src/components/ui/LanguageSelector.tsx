@@ -169,7 +169,7 @@ export default function LanguageSelector({
         className={`
           group relative w-full flex items-center justify-between gap-2
           h-7 px-2.5 text-left
-          rounded text-xs font-medium
+          rounded-[10px] text-xs font-medium
           border shadow-sm backdrop-blur-sm
           transition-[background-color,border-color,transform] duration-200 ease-out
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-1
@@ -205,7 +205,7 @@ export default function LanguageSelector({
               left: `${dropdownPosition.left}px`,
               width: `${dropdownPosition.width}px`,
             }}
-            className="z-9999 bg-popover/95 backdrop-blur-xl border border-border/70 rounded shadow-xl overflow-hidden"
+            className="z-9999 bg-popover/95 backdrop-blur-xl border border-border/70 rounded-[12px] shadow-xl overflow-hidden"
           >
             {showSearch && (
               <div className="px-2 pt-2 pb-1.5 border-b border-border/50">
@@ -253,7 +253,7 @@ export default function LanguageSelector({
                         className={`
                           group w-full flex items-center justify-between gap-2
                           h-7 px-2.5 text-left text-xs font-medium
-                          rounded transition-[background-color,color,transform] duration-150 ease-out
+                          rounded-[8px] transition-[background-color,color,transform] duration-150 ease-out
                           ${
                             isSelected
                               ? "bg-primary/15 text-primary shadow-sm"

@@ -1,9 +1,16 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 import { Loader2, Sparkles, Cloud, X, Mic, Trash2, Archive } from "lucide-react";
 import TranscriptionItem from "./ui/TranscriptionItem";
-import type { TranscriptionItem as TranscriptionItemType } from "../types/electron";
+import type {
+  GrammarHistoryItem,
+  TranscriptionItem as TranscriptionItemType,
+} from "../types/electron";
+import { normalizeDbDate } from "../utils/dateFormatting";
+import { useDialogs } from "../hooks/useDialogs";
+import { ConfirmDialog } from "./ui/dialog";
+import { useToast } from "./ui/useToast";
 import { formatHotkeyLabel, parseHotkeyList } from "../utils/hotkeys";
 import HistoryList from "./HistoryList";
 import { cn } from "./lib/utils";
@@ -49,6 +56,75 @@ export default function HistoryView({
   onToggleDiscarded,
 }: HistoryViewProps) {
   const { t } = useTranslation();
+  const [grammarHistory, setGrammarHistory] = useState<GrammarHistoryItem[]>([]);
+  const [grammarLoading, setGrammarLoading] = useState(true);
+  const [grammarError, setGrammarError] = useState(false);
+  const request = useRef(0);
+  const { confirmDialog, showConfirmDialog, hideConfirmDialog } = useDialogs();
+  const { toast } = useToast();
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const current = ++request.current;
+      try {
+        const items = await window.electronAPI.getGrammarHistory(500);
+        if (active && current === request.current) {
+          setGrammarHistory(items);
+          setGrammarError(false);
+        }
+      } catch {
+        if (active && current === request.current) setGrammarError(true);
+      } finally {
+        if (active && current === request.current) setGrammarLoading(false);
+      }
+    };
+    const dispose = window.electronAPI.onGrammarHistoryChanged(() => void load());
+    void load();
+    return () => {
+      active = false;
+      dispose();
+    };
+  }, []);
+  const combinedHistory = useMemo(
+    () =>
+      [
+        ...history.map((item) => ({
+          id: `transcription:${item.id}`,
+          timestamp: item.timestamp,
+          kind: "transcription" as const,
+          item,
+        })),
+        ...grammarHistory.map((item) => ({
+          id: `grammar:${item.id}`,
+          timestamp: item.timestamp,
+          kind: "grammar" as const,
+          item,
+        })),
+      ].sort(
+        (a, b) => normalizeDbDate(b.timestamp).getTime() - normalizeDbDate(a.timestamp).getTime()
+      ),
+    [history, grammarHistory]
+  );
+  function removeGrammar(id?: number) {
+    const clear = id === undefined;
+    showConfirmDialog({
+      title: t(clear ? "grammarHistory.clearTitle" : "grammarHistory.deleteTitle"),
+      description: t(
+        clear ? "grammarHistory.clearDescription" : "grammarHistory.deleteDescription"
+      ),
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          const result = clear
+            ? await window.electronAPI.clearGrammarHistory()
+            : await window.electronAPI.deleteGrammarHistoryItem(id);
+          if (!result.success) throw new Error("History delete failed");
+        } catch {
+          toast({ title: t("grammarHistory.deleteFailed"), variant: "destructive" });
+        }
+      },
+    });
+  }
   const dataRetentionEnabled = useSettingsStore((s) => s.dataRetentionEnabled);
   const { events, isLoading: eventsLoading, isConnected } = useUpcomingEvents();
 
@@ -67,9 +143,11 @@ export default function HistoryView({
   );
 
   return (
-    <div className="px-4 pt-4 pb-6">
+    <div className="px-6 pt-6 pb-10 sm:px-10">
       <div className={cn("mx-auto", isConnected ? "max-w-5xl" : "max-w-3xl")}>
-        {history.length === 0 && <div className="mb-2 flex justify-end">{discardedToggle}</div>}
+        {combinedHistory.length === 0 && (
+          <div className="mb-2 flex justify-end">{discardedToggle}</div>
+        )}
         {showCloudMigrationBanner && (
           <div className="mb-3 relative rounded-lg border border-transparent bg-card/50 dark:border-primary/20 dark:bg-primary/10 p-3">
             <button
@@ -146,6 +224,10 @@ export default function HistoryView({
           </div>
         )}
 
+        <h1 className="mb-5 mt-8 !text-[22px] !font-medium tracking-tight text-foreground">
+          {t("controlPanel.history.title")}
+        </h1>
+
         <div className={cn(isConnected ? "flex gap-6" : "")}>
           <div className={cn("min-w-0", isConnected ? "flex-1" : "w-full")}>
             {isConnected && (
@@ -164,14 +246,19 @@ export default function HistoryView({
                 </p>
               </div>
             )}
-            {isLoading && history.length === 0 ? (
+            {grammarError && (
+              <p role="alert" className="mb-3 text-xs text-destructive">
+                {t("grammarHistory.loadFailed")}
+              </p>
+            )}
+            {(isLoading || grammarLoading) && combinedHistory.length === 0 ? (
               <div className="rounded-lg border border-border bg-card/50 dark:border-white/10 dark:bg-white/[0.08]">
                 <div className="flex items-center justify-center gap-2 py-8">
                   <Loader2 size={14} className="animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">{t("controlPanel.loading")}</span>
                 </div>
               </div>
-            ) : history.length === 0 ? (
+            ) : combinedHistory.length === 0 ? (
               <div className="rounded-lg border border-border bg-card/50 dark:border-white/10 dark:bg-white/[0.08]">
                 <div className="flex flex-col items-center justify-center py-16 px-4">
                   <svg
@@ -277,29 +364,53 @@ export default function HistoryView({
               </div>
             ) : (
               <HistoryList
-                items={history}
+                items={combinedHistory}
                 actions={
                   <>
                     {discardedToggle}
-                    <button
-                      onClick={clearAllTranscriptions}
-                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] text-muted-foreground/60 hover:!text-destructive hover:!bg-destructive/8 dark:hover:!bg-destructive/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 transition-all duration-200"
-                    >
-                      <Trash2 size={11} />
-                      <span>{t("controlPanel.history.clearAll")}</span>
-                    </button>
+                    {history.length > 0 && (
+                      <button
+                        onClick={clearAllTranscriptions}
+                        className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] text-muted-foreground/60 hover:!text-destructive hover:!bg-destructive/8 dark:hover:!bg-destructive/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 transition-all duration-200"
+                      >
+                        <Trash2 size={11} />
+                        <span>
+                          {t("controlPanel.history.clearAll")} · {t("upcoming.transcriptions")}
+                        </span>
+                      </button>
+                    )}
+                    {grammarHistory.length > 0 && (
+                      <button
+                        onClick={() => removeGrammar()}
+                        className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] text-muted-foreground/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30 transition-colors"
+                      >
+                        <Trash2 size={11} /> {t("controlPanel.history.clearAll")} ·{" "}
+                        {t("sidebar.grammar")}
+                      </button>
+                    )}
                   </>
                 }
-                renderItem={(item) => (
-                  <TranscriptionItem
-                    item={item}
-                    onCopy={copyToClipboard}
-                    onDelete={deleteTranscription}
-                    onShowAudioInFolder={onShowAudioInFolder}
-                    onRetryTranscription={onRetryTranscription}
-                    onOpenSettings={() => onOpenSettings("transcription")}
-                  />
-                )}
+                renderItem={(entry) =>
+                  entry.kind === "grammar" ? (
+                    <TranscriptionItem
+                      item={entry.item}
+                      grammarOutcome={entry.item.outcome}
+                      historyKind="grammar"
+                      onCopy={copyToClipboard}
+                      onDelete={removeGrammar}
+                    />
+                  ) : (
+                    <TranscriptionItem
+                      item={entry.item}
+                      historyKind="transcription"
+                      onCopy={copyToClipboard}
+                      onDelete={deleteTranscription}
+                      onShowAudioInFolder={onShowAudioInFolder}
+                      onRetryTranscription={onRetryTranscription}
+                      onOpenSettings={() => onOpenSettings("transcription")}
+                    />
+                  )
+                }
               />
             )}
           </div>
@@ -313,6 +424,7 @@ export default function HistoryView({
           )}
         </div>
       </div>
+      <ConfirmDialog {...confirmDialog} onOpenChange={hideConfirmDialog} />
     </div>
   );
 }

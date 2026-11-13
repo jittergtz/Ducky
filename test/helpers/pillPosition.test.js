@@ -21,6 +21,27 @@ require.cache[require.resolve("electron")] = {
 const { WindowPositionUtil, WINDOW_SIZES } = require("../../src/helpers/windowConfig");
 const WindowManager = require("../../src/helpers/windowManager");
 
+test(
+  "macOS keeps the hover pill within the idle window",
+  { skip: process.platform !== "darwin" },
+  () => {
+  assert.ok(WINDOW_SIZES.BASE.width >= 168 + 2 * 32);
+  }
+);
+
+test("requesting the current window size does not move or resize the pill", () => {
+  const bounds = WindowPositionUtil.getMainWindowPosition(display, null, "top-center");
+  const manager = {
+    _panelStartPosition: "top-center",
+    mainWindow: {
+      isDestroyed: () => false,
+      getBounds: () => bounds,
+      setBounds: () => assert.fail("Unchanged bounds must not be sent to the native window"),
+    },
+  };
+  assert.deepEqual(WindowManager.prototype.resizeMainWindow.call(manager, "BASE").bounds, bounds);
+});
+
 test("grammar activity shows a passive pill and sends state without focusing the editor away", () => {
   const calls = [];
   const manager = {
@@ -50,7 +71,7 @@ test("grammar activity shows a passive pill and sends state without focusing the
 
 test("top-center uses the display center and starts below the menu bar", () => {
   assert.deepEqual(WindowPositionUtil.getMainWindowPosition(display, null, "top-center"), {
-    x: -948,
+    x: -900 - WINDOW_SIZES.BASE.width / 2,
     y: -158,
     ...WINDOW_SIZES.BASE,
   });

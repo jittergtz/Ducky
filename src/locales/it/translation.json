@@ -364,6 +364,7 @@
       "updatePayment": "Aggiorna pagamento"
     },
     "history": {
+      "title": "Cronologia",
       "couldNotLoadTitle": "Impossibile caricare la cronologia",
       "couldNotLoadDescription": "Si è verificato un errore nel caricamento delle trascrizioni. Chiudi e riapri l'app.",
       "copiedTitle": "Copiato!",

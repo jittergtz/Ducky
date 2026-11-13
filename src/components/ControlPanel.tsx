@@ -729,7 +729,7 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
 
   return (
     <div
-      className={`h-screen bg-background flex flex-col${platform === "darwin" ? " control-panel-glass" : ""}`}
+      className={`h-screen control-panel-root bg-background flex flex-col${platform === "darwin" ? " control-panel-glass" : ""}`}
     >
       <MeetingRecordingMount />
       <MeetingRecordingPill
@@ -822,7 +822,7 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
       )}
 
       <div className="flex min-h-0 flex-1 overflow-hidden relative">
-        <div className="z-30 w-48 max-md:w-16 shrink-0 border-r border-border-subtle">
+        <div className="z-30 w-16 shrink-0 py-2 pl-2">
           <ControlPanelSidebar
             activeView={activeView}
             onViewChange={setActiveView}
@@ -853,6 +853,24 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
                   size="sm"
                   onClick={handleUpdateClick}
                   disabled={isInstalling || isDownloading}
+                  aria-label={
+                    isInstalling
+                      ? t("controlPanel.update.installing")
+                      : isDownloading
+                        ? `${Math.round(downloadProgress)}%`
+                        : updateStatus.updateDownloaded
+                          ? t("controlPanel.update.installButton")
+                          : t("controlPanel.update.availableButton")
+                  }
+                  title={
+                    isInstalling
+                      ? t("controlPanel.update.installing")
+                      : isDownloading
+                        ? `${Math.round(downloadProgress)}%`
+                        : updateStatus.updateDownloaded
+                          ? t("controlPanel.update.installButton")
+                          : t("controlPanel.update.availableButton")
+                  }
                   className="gap-1.5 text-xs w-full h-7"
                 >
                   {getUpdateButtonContent()}

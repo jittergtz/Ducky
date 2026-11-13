@@ -8,6 +8,7 @@ import { useWindowDrag } from "./hooks/useWindowDrag";
 import { useAudioRecording } from "./hooks/useAudioRecording";
 import { useSettingsStore } from "./stores/settingsStore";
 import PillQuickSettings from "./components/PillQuickSettings";
+import { getCachedPlatform } from "./utils/platform";
 const VoiceWaveIndicator = ({ level }) => (
   <div className="flex h-5 items-center justify-center gap-0.5" aria-hidden="true">
     {[0.5, 0.8, 1, 0.7, 0.9, 0.55].map((weight, i) => (
@@ -35,7 +36,9 @@ export default function App() {
   const buttonRef = useRef(null);
   const hoverExitTimeoutRef = useRef(null);
   const pillRef = useRef(null);
-  const canvasSizeRef = useRef("BASE");
+  // The renderer can reload while the native window has an older size.
+  // Synchronize once on mount, then avoid resizing during hover transitions.
+  const canvasSizeRef = useRef(null);
   const { toast, dismiss, toastCount } = useToast();
   const { t } = useTranslation();
   const { isDragging, handleMouseDown, handleMouseUp } = useWindowDrag();
@@ -208,13 +211,15 @@ export default function App() {
     const sizeKey =
       quickSettings || (isCommandMenuOpen && toastCount > 0)
         ? "EXPANDED"
-        : isCommandMenuOpen || isHovered || isGrammarCorrecting
+        : isCommandMenuOpen ||
+            (getCachedPlatform() !== "darwin" && (isHovered || isGrammarCorrecting))
           ? "WITH_MENU"
           : toastCount > 0
             ? "WITH_TOAST"
             : "BASE";
 
     const sizes = { BASE: 0, WITH_MENU: 1, WITH_TOAST: 2, EXPANDED: 2 };
+    if (sizeKey === canvasSizeRef.current) return;
     const resize = () => {
       canvasSizeRef.current = sizeKey;
       window.electronAPI?.resizeMainWindow?.(sizeKey);
@@ -378,7 +383,7 @@ export default function App() {
     hoverExitTimeoutRef.current = setTimeout(() => {
       if (pillRef.current?.contains(document.activeElement)) return;
       setIsHovered(false);
-    }, 500);
+    }, 200);
   };
 
   return (

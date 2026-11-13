@@ -214,8 +214,8 @@ export function ChatMessage({
         <div
           data-chat-bubble
           className={cn(
-            "max-w-[80%] px-3 py-2 rounded-lg rounded-br-sm",
-            "bg-primary/90 text-primary-foreground",
+            "max-w-[80%] px-4 py-3 rounded-[20px]",
+            "bg-neutral-200 dark:bg-[#292929] text-foreground",
             "text-[13px] leading-relaxed"
           )}
         >
@@ -237,8 +237,8 @@ export function ChatMessage({
       <div
         data-chat-bubble
         className={cn(
-          "max-w-[85%] px-3 py-2 rounded-lg rounded-bl-sm",
-          "bg-surface-1 border border-border/30 text-foreground",
+          "max-w-[85%] px-4 py-3 rounded-[20px]",
+          "bg-neutral-100 dark:bg-[#191919] text-foreground",
           "text-[13px] leading-relaxed"
         )}
       >

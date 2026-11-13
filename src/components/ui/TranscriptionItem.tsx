@@ -11,6 +11,8 @@ import {
   Loader2,
   AlertCircle,
   ArchiveRestore,
+  AudioLines,
+  PencilLine,
 } from "lucide-react";
 import type {
   TextHistoryItem,
@@ -32,6 +34,7 @@ function getShowInFolderKey(): string {
 interface TranscriptionItemProps {
   item: TextHistoryItem;
   grammarOutcome?: GrammarHistoryItem["outcome"];
+  historyKind?: "grammar" | "transcription";
   onCopy: (text: string) => void;
   onDelete: (id: number) => void;
   onShowAudioInFolder?: (id: number) => void;
@@ -42,6 +45,7 @@ interface TranscriptionItemProps {
 export default function TranscriptionItem({
   item,
   grammarOutcome,
+  historyKind,
   onCopy,
   onDelete,
   onShowAudioInFolder,
@@ -95,12 +99,13 @@ export default function TranscriptionItem({
   return (
     <div
       className={cn(
-        "group rounded-md border border-l-2 px-3 py-2.5 transition-colors duration-150",
+        "group relative rounded-[22px] border border-l-2 px-5 py-4 transition-colors duration-150",
+        historyKind && "pr-12",
         isFailed
           ? "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
           : isDiscarded
             ? "border-border/30 bg-muted/20 hover:bg-muted/30 opacity-80"
-            : "border-border/40 dark:border-border-subtle/60 bg-card/50 dark:bg-surface-2/60 hover:bg-muted/30 dark:hover:bg-surface-2/80",
+            : "border-transparent dark:border-transparent bg-neutral-100 dark:bg-[#191919] hover:bg-neutral-200/70 dark:hover:bg-[#222222]",
         // Subtle left accent for translation records; transparent keeps others pixel-aligned.
         item.route_kind === "translation"
           ? "border-l-primary/70 dark:border-l-primary/70"
@@ -109,6 +114,16 @@ export default function TranscriptionItem({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {historyKind && (
+        <span
+          className="absolute bottom-3 right-4 text-muted-foreground/60"
+          role="img"
+          aria-label={t(historyKind === "grammar" ? "sidebar.grammar" : "upcoming.transcriptions")}
+          title={t(historyKind === "grammar" ? "sidebar.grammar" : "upcoming.transcriptions")}
+        >
+          {historyKind === "grammar" ? <PencilLine size={14} /> : <AudioLines size={14} />}
+        </span>
+      )}
       <div className="flex items-start gap-3">
         {formattedTime && (
           <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums pt-0.5">

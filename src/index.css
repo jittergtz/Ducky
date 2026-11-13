@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-
-
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -50,10 +48,6 @@
   --color-border-subtle: #e5e5e5;
   --color-border-hover: #d4d4d4;
   --color-border-active: #737373;
-
-
-
-
 }
 
 :root {
@@ -94,7 +88,7 @@
 .dark {
   color-scheme: dark;
   /* Dark mode — neutral surfaces with a clear elevation hierarchy. */
-  --color-background: oklch(0.18 0 0);
+  --color-background: #000;
   --color-foreground: oklch(100% 0.00011 271.152);
   --color-card: oklch(0.24 0 0);
   --color-card-foreground: oklch(0.93 0 0);
@@ -103,7 +97,7 @@
   --color-primary: oklch(46.4% 0.00005 271.152);
   --color-primary-foreground: oklch(0.16 0 0);
   --color-active-icon: #ffffff;
-  --color-theme-selected: oklch(0.30 0 0);
+  --color-theme-selected: oklch(0.3 0 0);
   --color-secondary: oklch(25.967% 0 0);
   --color-secondary-foreground: oklch(96.416% 0 0);
   --color-muted: oklch(0.29 0 0);
@@ -123,10 +117,10 @@
   --color-info-foreground: oklch(0.99 0 0);
 
   /* Each step is lighter than the surface below it. */
-  --color-surface-0: oklch(0.18 0 0);
+  --color-surface-0: #000;
   --color-surface-1: oklch(19.574% 0.00002 271.152 / 0.771);
   --color-surface-2: oklch(0.26 0 0);
-  --color-surface-3: oklch(0.30 0 0);
+  --color-surface-3: oklch(0.3 0 0);
   --color-surface-raised: oklch(0.34 0 0);
 
   /* Border states */
@@ -191,8 +185,7 @@
   }
 }
 
-/* Native macOS vibrancy sits behind the web content. Leave the window and
-   main surfaces translucent so the desktop can show through the material. */
+/* Transparent window backing lets the rounded panel define its own canvas. */
 body:has(.control-panel-glass),
 body:has(.control-panel-glass) #root {
   background: transparent;
@@ -204,6 +197,28 @@ body:has(.control-panel-glass) #root {
 
 .dark .control-panel-glass {
   background: rgb(0 0 0 / 58%);
+}
+
+/* The control panel uses an opaque canvas and an inset navigation rail. */
+.control-panel-root {
+  --color-background: #fff;
+  --color-surface-0: #fff;
+  background: #fff;
+}
+.dark .control-panel-root {
+  --color-background: #000;
+  --color-surface-0: #000;
+  background: #000;
+}
+.sidebar-update button {
+  width: 36px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0;
+}
+.sidebar-update button svg {
+  flex-shrink: 0;
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -402,12 +417,7 @@ a:hover {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    oklch(0.65 0 0 / 0.5),
-    oklch(0.7 0 0 / 0.3),
-    transparent 80%
-  );
+  background: linear-gradient(90deg, oklch(0.65 0 0 / 0.5), oklch(0.7 0 0 / 0.3), transparent 80%);
   pointer-events: none;
   z-index: 1;
 }

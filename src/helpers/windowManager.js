@@ -199,6 +199,11 @@ class WindowManager {
     newX = Math.max(workArea.x, Math.min(newX, workArea.x + workArea.width - newSize.width));
     newY = Math.max(workArea.y, Math.min(newY, workArea.y + workArea.height - newSize.height));
 
+    if (currentBounds.x === newX && currentBounds.y === newY &&
+        currentBounds.width === newSize.width && currentBounds.height === newSize.height) {
+      return { success: true, bounds: currentBounds };
+    }
+
     this.mainWindow.setBounds({
       x: newX,
       y: newY,

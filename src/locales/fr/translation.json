@@ -364,6 +364,7 @@
       "updatePayment": "Mettre à jour le paiement"
     },
     "history": {
+      "title": "Historique",
       "couldNotLoadTitle": "Impossible de charger votre historique",
       "couldNotLoadDescription": "Un problème est survenu lors du chargement des transcriptions. Fermez puis rouvrez l'application.",
       "copiedTitle": "Copié !",

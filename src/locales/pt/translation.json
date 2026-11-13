@@ -343,6 +343,7 @@
       "updatePayment": "Atualizar pagamento"
     },
     "history": {
+      "title": "Histórico",
       "couldNotLoadTitle": "Não foi possível carregar seu histórico",
       "couldNotLoadDescription": "Ocorreu um erro ao carregar as transcrições. Feche e abra o app novamente.",
       "copiedTitle": "Copiado!",

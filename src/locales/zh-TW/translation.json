@@ -364,6 +364,7 @@
       "updatePayment": "更新付款"
     },
     "history": {
+      "title": "歷史記錄",
       "couldNotLoadTitle": "無法載入歷史記錄",
       "couldNotLoadDescription": "載入轉錄記錄時發生錯誤。請嘗試關閉並重新開啟應用程式。",
       "copiedTitle": "已複製！",

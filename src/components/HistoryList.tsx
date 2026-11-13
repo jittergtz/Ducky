@@ -8,7 +8,7 @@ interface HistoryListProps<Item> {
   actions?: ReactNode;
 }
 
-export default function HistoryList<Item extends { id: number; timestamp: string }>({
+export default function HistoryList<Item extends { id: number | string; timestamp: string }>({
   items,
   renderItem,
   actions,
@@ -39,7 +39,7 @@ export default function HistoryList<Item extends { id: number; timestamp: string
               </div>
             )}
           </div>
-          <div className="space-y-1.5 relative z-0">
+          <div className="space-y-3 relative z-0">
             {group.items.map((item) => (
               <div key={item.id}>{renderItem(item)}</div>
             ))}

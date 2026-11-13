@@ -450,6 +450,7 @@
       "updatePayment": "Update Payment"
     },
     "history": {
+      "title": "History",
       "couldNotLoadTitle": "Couldn't load your history",
       "couldNotLoadDescription": "Something went wrong loading your transcriptions. Try closing and reopening the app.",
       "copiedTitle": "Copied!",
