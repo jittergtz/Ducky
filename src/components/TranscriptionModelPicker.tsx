@@ -45,6 +45,7 @@ interface TranscriptionModelPickerProps {
   onLocalModelSelect: (modelId: string, provider: "whisper" | "nvidia" | "qwen") => void;
   selectedLocalProvider?: string;
   onLocalProviderSelect?: (providerId: string) => void;
+  onLocalModelsChanged?: () => void;
   useLocalWhisper: boolean;
   onModeChange: (useLocal: boolean) => void;
   cloudTranscriptionBaseUrl?: string;
@@ -185,6 +186,7 @@ export default function TranscriptionModelPicker({
   onLocalModelSelect,
   selectedLocalProvider = "whisper",
   onLocalProviderSelect,
+  onLocalModelsChanged,
   useLocalWhisper,
   onModeChange,
   cloudTranscriptionBaseUrl = "",
@@ -464,7 +466,10 @@ export default function TranscriptionModelPicker({
     isCancelling,
   } = useModelDownload({
     modelType: "whisper",
-    onDownloadComplete: loadLocalModels,
+    onDownloadComplete: async () => {
+      await loadLocalModels();
+      onLocalModelsChanged?.();
+    },
   });
 
   const {
@@ -478,7 +483,10 @@ export default function TranscriptionModelPicker({
     isCancelling: isCancellingParakeet,
   } = useModelDownload({
     modelType: "parakeet",
-    onDownloadComplete: loadParakeetModels,
+    onDownloadComplete: async () => {
+      await loadParakeetModels();
+      onLocalModelsChanged?.();
+    },
   });
 
   const handleModeChange = useCallback(
@@ -575,12 +583,13 @@ export default function TranscriptionModelPicker({
               setLocalModels(result.models);
               validateAndSelectModel(result.models);
             }
+            onLocalModelsChanged?.();
           });
         },
         variant: "destructive",
       });
     },
-    [showConfirmDialog, deleteModel, validateAndSelectModel, t]
+    [showConfirmDialog, deleteModel, validateAndSelectModel, onLocalModelsChanged, t]
   );
 
   const currentCloudProvider = useMemo<TranscriptionProviderData | undefined>(
@@ -730,12 +739,13 @@ export default function TranscriptionModelPicker({
             if (result?.success) {
               setParakeetModels(result.models);
             }
+            onLocalModelsChanged?.();
           });
         },
         variant: "destructive",
       });
     },
-    [showConfirmDialog, deleteParakeetModel, t]
+    [showConfirmDialog, deleteParakeetModel, onLocalModelsChanged, t]
   );
 
   const renderParakeetModels = () => {
@@ -1022,6 +1032,7 @@ export default function TranscriptionModelPicker({
                   name={model.name}
                   size={model.size}
                   styles={styles}
+                  onModelsChanged={onLocalModelsChanged}
                   isSelected={selectedLocalProvider === "qwen" && selectedLocalModel === modelId}
                   onSelect={() => {
                     onLocalModelSelect(modelId, "qwen");

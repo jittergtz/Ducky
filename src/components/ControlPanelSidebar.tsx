@@ -3,6 +3,7 @@ import { Blocks, Gift, UserPlus, X, Search } from "lucide-react";
 import logoIcon from "../assets/icon.png";
 import homeIcon from "../assets/icons/sidebar/home.png";
 import grammarIcon from "../assets/icons/sidebar/grammar.png";
+import dictationIcon from "../assets/icons/sidebar/dictation.png";
 import chatIcon from "../assets/icons/sidebar/chat.png";
 import notesIcon from "../assets/icons/sidebar/notes.png";
 import dictionaryIcon from "../assets/icons/sidebar/dictionary.png";
@@ -29,6 +30,7 @@ const rowButtonClass =
 
 export type ControlPanelView =
   | "home"
+  | "dictation"
   | "grammar"
   | "chat"
   | "personal-notes"
@@ -93,6 +95,7 @@ export default function ControlPanelSidebar({
     image?: string;
   }[] = [
     { id: "home", label: t("sidebar.home"), image: homeIcon },
+    { id: "dictation", label: t("dictationHistory.title"), image: dictationIcon },
     { id: "grammar", label: t("sidebar.grammar"), image: grammarIcon },
     { id: "chat", label: t("sidebar.chat"), image: chatIcon },
     { id: "personal-notes", label: t("sidebar.notes"), image: notesIcon },

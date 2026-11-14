@@ -36,7 +36,7 @@ export default function NoteBottomBar({
   }, [isRecording]);
 
   return (
-    <div className="note-bottom-bar shrink-0 border-t border-border-subtle bg-background px-5 py-3">
+    <div className="note-bottom-bar shrink-0 bg-background px-5 py-3">
       <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center gap-2">
         <button
           type="button"

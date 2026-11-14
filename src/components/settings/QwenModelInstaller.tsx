@@ -13,6 +13,7 @@ export default function QwenModelInstaller({
   styles,
   isSelected,
   onSelect,
+  onModelsChanged,
 }: {
   modelId: string;
   name: string;
@@ -20,6 +21,7 @@ export default function QwenModelInstaller({
   styles: ModelPickerStyles;
   isSelected: boolean;
   onSelect: () => void;
+  onModelsChanged?: () => void;
 }) {
   const { t } = useTranslation();
   const { confirmDialog, showConfirmDialog, hideConfirmDialog } = useDialogs();
@@ -95,7 +97,10 @@ export default function QwenModelInstaller({
       const result = await window.electronAPI.qwenModelInstall(modelId);
       if (!result.success && result.code !== "DOWNLOAD_CANCELLED")
         setError(result.error || "Download failed");
-      if (result.success) onSelect();
+      if (result.success) {
+        onSelect();
+        onModelsChanged?.();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Download failed");
     } finally {
@@ -125,6 +130,7 @@ export default function QwenModelInstaller({
     try {
       const result = await window.electronAPI.qwenModelRemove(modelId);
       if (!result.success) setError(result.error || "Could not remove model");
+      else onModelsChanged?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not remove model");
     } finally {

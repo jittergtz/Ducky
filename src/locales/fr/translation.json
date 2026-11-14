@@ -182,6 +182,24 @@
     "skip": "Passer"
   },
   "onboarding": {
+    "featureIntro": {
+      "welcomeTitle": "Bienvenue sur Ducky",
+      "welcomeDescription": "Transformez votre voix en texte et améliorez vos écrits en quelques touches.",
+      "getStarted": "Commencer",
+      "hostedOption": "Ducky Cloud",
+      "providerLocalOption": "Fournisseur ou modèle local",
+      "dictationTitle": "Voix en texte",
+      "dictationDescription": "Parlez dans un champ de texte. Utilisez le raccourci de dictée pour démarrer et arrêter ; Ducky transforme votre voix en texte.",
+      "dictationExample": "Vos mots apparaissent ici, prêts à être envoyés.",
+      "dictationShortcut": "Raccourci de dictée",
+      "grammarTitle": "Correction grammaticale",
+      "grammarDescription": "Sélectionnez du texte modifiable et utilisez le raccourci grammatical pour le remplacer par une version corrigée.",
+      "grammarExample": "Cette phrase contiennent quelques erreur.",
+      "exampleLabel": "Texte exemple à sélectionner",
+      "grammarShortcut": "Raccourci grammatical",
+      "grammarSetupHint": "Choisissez un raccourci. Après la configuration, connectez votre abonnement ChatGPT dans Fournisseurs, puis choisissez un modèle grammatical dans Réglages → Raccourcis.",
+      "grammarMacOnly": "La correction grammaticale est actuellement disponible sur macOS."
+    },
     "steps": {
       "welcome": "Bienvenue",
       "setup": "Configuration",
@@ -2094,6 +2112,12 @@
         "embedding_en": "Empreinte vocale pour l'identification des intervenants"
       }
     }
+  },
+  "dictationHistory": {
+    "title": "Dictée",
+    "description": "Vos dernières transcriptions vocales",
+    "empty": "Aucune dictée pour le moment",
+    "emptyHint": "Utilisez votre raccourci de dictée pour transcrire votre voix."
   },
   "sidebar": {
     "home": "Accueil",

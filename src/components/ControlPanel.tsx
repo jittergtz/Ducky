@@ -60,6 +60,7 @@ const IntegrationsView = React.lazy(() => import("./IntegrationsView"));
 const ProviderView = React.lazy(() => import("./ProviderView"));
 const ChatView = React.lazy(() => import("./chat/ChatView"));
 const GrammarHistoryView = React.lazy(() => import("./GrammarHistoryView"));
+const DictationHistoryView = React.lazy(() => import("./DictationHistoryView"));
 const CommandSearch = React.lazy(() => import("./CommandSearch"));
 
 interface ControlPanelProps {
@@ -1014,6 +1015,26 @@ export default function ControlPanel({ initialSettingsSection }: ControlPanelPro
             {activeView === "grammar" && (
               <Suspense fallback={null}>
                 <GrammarHistoryView onCopy={copyToClipboard} />
+              </Suspense>
+            )}
+            {activeView === "dictation" && (
+              <Suspense fallback={null}>
+                <DictationHistoryView
+                  items={history}
+                  loading={isLoading}
+                  hotkey={hotkey}
+                  showDiscarded={showDiscarded}
+                  onToggleDiscarded={toggleShowDiscarded}
+                  onCopy={copyToClipboard}
+                  onDelete={deleteTranscription}
+                  onClear={clearAllTranscriptions}
+                  onShowAudioInFolder={showAudioInFolder}
+                  onRetry={retryTranscription}
+                  onOpenSettings={() => {
+                    setSettingsSection("transcription");
+                    setShowSettings(true);
+                  }}
+                />
               </Suspense>
             )}
             {activeView === "chat" && (

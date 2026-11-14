@@ -161,6 +161,24 @@
     "skip": "Pular"
   },
   "onboarding": {
+    "featureIntro": {
+      "welcomeTitle": "Bem-vindo ao Ducky",
+      "welcomeDescription": "Transforme a sua voz em texto e melhore a sua escrita com algumas teclas.",
+      "getStarted": "Começar",
+      "hostedOption": "Ducky Cloud",
+      "providerLocalOption": "Fornecedor ou modelo local",
+      "dictationTitle": "Voz para texto",
+      "dictationDescription": "Fale num campo de texto. Use o atalho de ditado para iniciar e parar; o Ducky transforma a sua voz em texto.",
+      "dictationExample": "As suas palavras aparecem aqui, prontas a enviar.",
+      "dictationShortcut": "Atalho de ditado",
+      "grammarTitle": "Correção gramatical",
+      "grammarDescription": "Selecione texto num campo editável e use o atalho de gramática para o substituir por uma versão corrigida.",
+      "grammarExample": "Esta frase tem alguns erro.",
+      "exampleLabel": "Texto de exemplo para selecionar",
+      "grammarShortcut": "Atalho de gramática",
+      "grammarSetupHint": "Escolha um atalho. Após a configuração, ligue o seu plano ChatGPT em Fornecedores e escolha um modelo de gramática em Definições → Atalhos.",
+      "grammarMacOnly": "A correção gramatical está atualmente disponível no macOS."
+    },
     "steps": {
       "welcome": "Boas-vindas",
       "setup": "Configuração",
@@ -2449,6 +2467,12 @@
     "addFirstWord": "Adicione sua primeira palavra",
     "importList": "Importar uma lista",
     "agentDefault": "Adicionado por padrão"
+  },
+  "dictationHistory": {
+    "title": "Ditado",
+    "description": "As suas transcrições de voz mais recentes",
+    "empty": "Ainda não há ditados",
+    "emptyHint": "Use o atalho de ditado para transcrever a fala."
   },
   "sidebar": {
     "home": "Início",

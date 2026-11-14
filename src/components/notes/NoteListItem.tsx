@@ -118,9 +118,11 @@ export default function NoteListItem({
       onClick={onClick}
       {...dragHandlers}
       className={cn(
-        "group relative w-full text-left px-3 py-2 cursor-pointer transition-all duration-150",
+        "group relative mx-3 mb-1 w-[calc(100%-1.5rem)] rounded-xl px-3 py-3 text-left cursor-pointer transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
-        isActive ? "bg-primary/6 dark:bg-primary/8" : "hover:bg-foreground/3 dark:hover:bg-white/3",
+        isActive
+          ? "bg-foreground/8 dark:bg-white/8"
+          : "hover:bg-foreground/5 dark:hover:bg-white/5",
         isDragging && "opacity-40 scale-[0.97]"
       )}
     >
@@ -128,7 +130,7 @@ export default function NoteListItem({
         <div className="flex items-center justify-between gap-2">
           <p
             className={cn(
-              "text-xs truncate transition-colors duration-150 text-foreground",
+              "text-sm truncate transition-colors duration-150 text-foreground",
               isActive && "font-medium"
             )}
           >

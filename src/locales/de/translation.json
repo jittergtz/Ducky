@@ -182,6 +182,24 @@
     "skip": "Überspringen"
   },
   "onboarding": {
+    "featureIntro": {
+      "welcomeTitle": "Willkommen bei Ducky",
+      "welcomeDescription": "Wandle deine Stimme in Text um und verbessere deine Texte mit wenigen Tastendrücken.",
+      "getStarted": "Los geht’s",
+      "hostedOption": "Ducky Cloud",
+      "providerLocalOption": "Anbieter oder lokales Modell",
+      "dictationTitle": "Sprache zu Text",
+      "dictationDescription": "Sprich in ein Textfeld. Starte und stoppe die Aufnahme mit deinem Diktierkurzbefehl; Ducky wandelt deine Stimme in Text um.",
+      "dictationExample": "Deine Worte erscheinen hier, bereit zum Senden.",
+      "dictationShortcut": "Diktierkurzbefehl",
+      "grammarTitle": "Grammatikkorrektur",
+      "grammarDescription": "Markiere Text in einem bearbeitbaren Feld und nutze den Grammatik-Kurzbefehl, um ihn zu korrigieren.",
+      "grammarExample": "Dieser Satz haben ein paar Fehler.",
+      "exampleLabel": "Beispieltext zum Markieren",
+      "grammarShortcut": "Grammatik-Kurzbefehl",
+      "grammarSetupHint": "Wähle jetzt einen Kurzbefehl. Verbinde nach der Einrichtung deinen ChatGPT-Plan unter Anbieter und wähle das Grammatikmodell unter Einstellungen → Kurzbefehle.",
+      "grammarMacOnly": "Die Grammatikkorrektur ist derzeit unter macOS verfügbar."
+    },
     "steps": {
       "welcome": "Willkommen",
       "setup": "Einrichtung",
@@ -2449,6 +2467,12 @@
     "addFirstWord": "Füge dein erstes Wort hinzu",
     "importList": "Liste importieren",
     "agentDefault": "Standardmäßig enthalten"
+  },
+  "dictationHistory": {
+    "title": "Diktat",
+    "description": "Deine neuesten Sprachtranskriptionen",
+    "empty": "Noch keine Diktate",
+    "emptyHint": "Nutze deinen Diktierkurzbefehl, um Sprache in Text umzuwandeln."
   },
   "sidebar": {
     "home": "Startseite",

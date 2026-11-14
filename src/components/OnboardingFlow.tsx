@@ -14,6 +14,8 @@ import {
   Sparkles,
   UserCircle,
   Users,
+  AudioLines,
+  PencilLine,
 } from "lucide-react";
 import TitleBar from "./TitleBar";
 import WindowControls from "./WindowControls";
@@ -53,14 +55,16 @@ import { ActivationModeSelector } from "./ui/ActivationModeSelector";
 import TranscriptionModelPicker from "./TranscriptionModelPicker";
 import { ACCESSIBILITY_SKIPPED_KEY, areRequiredPermissionsMet } from "../utils/permissions";
 import UseCaseStep from "./onboarding/UseCaseStep";
+import FeatureIntroStep from "./onboarding/FeatureIntroStep";
+import { migrateOnboardingStep } from "../utils/onboardingStepMigration";
 import MeetingSetupStep from "./onboarding/MeetingSetupStep";
 import FinishStep from "./onboarding/FinishStep";
 import { USE_CASE_IDS } from "./onboarding/useCases";
 import { cloudPost } from "../services/cloudApi";
 import { AUTH_DISABLED } from "../lib/features";
 
-// Highest possible step index across flow variants (skip-auth with meeting step).
-const MAX_STEP_INDEX = 7;
+// Highest possible step index across flow variants, including the introduction pages.
+const MAX_STEP_INDEX = 9;
 
 // Steps whose primary action is optional — the user can advance without it.
 const SKIPPABLE_STEPS = new Set(["usecase", "voiceAgent", "meeting"]);
@@ -73,6 +77,11 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const { t } = useTranslation();
   const { isSignedIn } = useAuth();
 
+  // Preserve the step of people who started the earlier onboarding flow.
+  useState(() => {
+    migrateOnboardingStep(localStorage, MAX_STEP_INDEX);
+    return true;
+  });
   const [currentStep, setCurrentStep, removeCurrentStep] = useLocalStorage(
     "onboardingCurrentStep",
     0,
@@ -104,6 +113,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     parakeetModel,
     qwenModel,
     cloudTranscriptionProvider,
+    cloudTranscriptionMode,
     cloudTranscriptionModel,
     cloudTranscriptionBaseUrl,
     openaiApiKey,
@@ -140,6 +150,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [skipAuth, setSkipAuth] = useState(() => AUTH_DISABLED || false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [isModelDownloaded, setIsModelDownloaded] = useState(false);
+  const [modelRefreshKey, setModelRefreshKey] = useState(0);
   const { isUsingNativeShortcut, isUsingHyprland, hyprlandConfigStatus, supportsPushToTalk } =
     useHotkeyModeInfo("onboarding");
   const readableHotkey = formatHotkeyLabel(hotkey);
@@ -209,6 +220,12 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const steps = useMemo(() => {
     const list = [
       { id: "welcome", title: t("onboarding.steps.welcome"), icon: UserCircle },
+      {
+        id: "dictationIntro",
+        title: t("onboarding.featureIntro.dictationTitle"),
+        icon: AudioLines,
+      },
+      { id: "grammarIntro", title: t("onboarding.featureIntro.grammarTitle"), icon: PencilLine },
       { id: "usecase", title: t("onboarding.steps.useCase"), icon: Sparkles },
       { id: "setup", title: t("onboarding.steps.setup"), icon: Settings },
     ];
@@ -239,6 +256,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   // Only show progress for signed-up users after account creation step
   const showProgress = currentStep > 0;
+  const isFeatureIntro = currentStepId === "dictationIntro" || currentStepId === "grammarIntro";
 
   useEffect(() => {
     if (isUsingNativeShortcut && !supportsPushToTalk) {
@@ -270,21 +288,22 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       return;
     }
 
+    let active = true;
     const checkStatus = async () => {
       try {
         if (localTranscriptionProvider === "qwen") {
           const result = await window.electronAPI?.qwenModelStatus(qwenModel);
-          setIsModelDownloaded(result?.installed ?? false);
+          if (active) setIsModelDownloaded(result?.installed ?? false);
           return;
         }
         const result =
           localTranscriptionProvider === "nvidia"
             ? await window.electronAPI?.checkParakeetModelStatus(modelToCheck)
             : await window.electronAPI?.checkModelStatus(modelToCheck);
-        setIsModelDownloaded(result?.downloaded ?? false);
+        if (active) setIsModelDownloaded(result?.downloaded ?? false);
       } catch (error) {
         logger.error("Failed to check model status", { error }, "onboarding");
-        setIsModelDownloaded(false);
+        if (active) setIsModelDownloaded(false);
       }
     };
 
@@ -292,8 +311,18 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     const unsubscribe = window.electronAPI?.onQwenModelFinished?.(() => {
       void checkStatus();
     });
-    return () => unsubscribe?.();
-  }, [useLocalWhisper, whisperModel, parakeetModel, qwenModel, localTranscriptionProvider]);
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [
+    useLocalWhisper,
+    whisperModel,
+    parakeetModel,
+    qwenModel,
+    localTranscriptionProvider,
+    modelRefreshKey,
+  ]);
 
   // Auto-register default hotkey when entering the activation step
   const activationStepIndex = steps.findIndex((step) => step.id === "activation");
@@ -542,13 +571,15 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         if (AUTH_DISABLED) {
           return (
             <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
-                S
+              <div className="w-12 h-12 rounded-2xl bg-neutral-100 dark:bg-white/10 flex items-center justify-center text-foreground">
+                <AudioLines size={22} />
               </div>
               <div className="space-y-1 max-w-sm">
-                <h3 className="text-lg font-semibold text-foreground">Welcome to Ducky</h3>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {t("onboarding.featureIntro.welcomeTitle")}
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  Running in Local & Custom API Key mode. No account or cloud login required.
+                  {t("onboarding.featureIntro.welcomeDescription")}
                 </p>
               </div>
               <Button
@@ -558,7 +589,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 }}
                 className="w-full max-w-xs mt-4"
               >
-                Get Started
+                {t("onboarding.featureIntro.getStarted")}
               </Button>
             </div>
           );
@@ -590,6 +621,10 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           />
         );
 
+      case "dictationIntro":
+        return <FeatureIntroStep kind="dictation" dictationHotkey={hotkey} />;
+      case "grammarIntro":
+        return <FeatureIntroStep kind="grammar" dictationHotkey={hotkey} />;
       case "usecase":
         return (
           <UseCaseStep
@@ -601,51 +636,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         );
 
       case "setup": // Choose Mode & Configure (merged with permissions for signed-in users)
-        if (isSignedIn && !skipAuth) {
-          return (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-14 h-14 bg-neutral-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-7 h-7 text-neutral-500" />
-                </div>
-                <h2 className="text-2xl font-semibold text-foreground mb-2">
-                  {t("onboarding.setup.title")}
-                </h2>
-                <p className="text-muted-foreground">{t("onboarding.setup.description")}</p>
-              </div>
-
-              {/* Language Selector */}
-              <div className="space-y-2.5 p-3 bg-muted/50 border border-border/60 rounded">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-medium text-muted-foreground">
-                    {t("onboarding.setup.language")}
-                  </label>
-                  <LanguageSelector
-                    value={preferredLanguage}
-                    onChange={(value) => {
-                      updateTranscriptionSettings({ preferredLanguage: value });
-                    }}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Permissions */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-foreground">
-                  {t("onboarding.permissions.title")}
-                </h3>
-                <PermissionsSection
-                  permissions={permissionsHook}
-                  systemAudio={systemAudio}
-                  systemAudioRecommended={onboardingUseCases.includes(USE_CASE_IDS.meetings)}
-                />
-              </div>
-            </div>
-          );
-        }
-
-        // Not signed in — full setup (unchanged)
+        // Both account and local-only users can choose a provider or local model.
         return (
           <div className="space-y-3">
             <div className="text-center space-y-0.5">
@@ -657,52 +648,108 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               </p>
             </div>
 
-            {/* Unified configuration with integrated mode toggle */}
-            <TranscriptionModelPicker
-              selectedCloudProvider={cloudTranscriptionProvider}
-              onCloudProviderSelect={(provider) =>
-                updateTranscriptionSettings({ cloudTranscriptionProvider: provider })
-              }
-              selectedCloudModel={cloudTranscriptionModel}
-              onCloudModelSelect={(model) =>
-                updateTranscriptionSettings({ cloudTranscriptionModel: model })
-              }
-              selectedLocalModel={
-                localTranscriptionProvider === "qwen"
-                  ? qwenModel
-                  : localTranscriptionProvider === "nvidia"
-                    ? parakeetModel
-                    : whisperModel
-              }
-              onLocalModelSelect={(modelId, provider) => {
-                if (provider === "qwen") {
-                  updateTranscriptionSettings({ qwenModel: modelId });
-                } else if (provider === "nvidia") {
-                  updateTranscriptionSettings({ parakeetModel: modelId });
-                } else {
-                  updateTranscriptionSettings({ whisperModel: modelId });
+            {isSignedIn && !skipAuth && (
+              <div
+                className="grid grid-cols-2 gap-2"
+                role="group"
+                aria-label={t("onboarding.transcription.title")}
+              >
+                <button
+                  type="button"
+                  aria-pressed={!useLocalWhisper && cloudTranscriptionMode !== "byok"}
+                  className={`rounded-2xl border p-3 text-left text-sm transition-colors ${!useLocalWhisper && cloudTranscriptionMode !== "byok" ? "border-blue-500 bg-blue-500/10" : "border-border bg-muted/30"}`}
+                  onClick={() =>
+                    updateTranscriptionSettings({
+                      useLocalWhisper: false,
+                      cloudTranscriptionMode: "openwhispr",
+                      transcriptionMode: "openwhispr",
+                    })
+                  }
+                >
+                  {t("onboarding.featureIntro.hostedOption")}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={useLocalWhisper || cloudTranscriptionMode === "byok"}
+                  className={`rounded-2xl border p-3 text-left text-sm transition-colors ${useLocalWhisper || cloudTranscriptionMode === "byok" ? "border-blue-500 bg-blue-500/10" : "border-border bg-muted/30"}`}
+                  onClick={() =>
+                    updateTranscriptionSettings({
+                      cloudTranscriptionMode: "byok",
+                      transcriptionMode: useLocalWhisper ? "local" : "providers",
+                    })
+                  }
+                >
+                  {t("onboarding.featureIntro.providerLocalOption")}
+                </button>
+              </div>
+            )}
+
+            {/* Third-party providers and local models share the existing picker. */}
+            {(!isSignedIn || skipAuth || useLocalWhisper || cloudTranscriptionMode === "byok") && (
+              <TranscriptionModelPicker
+                onLocalModelsChanged={() => setModelRefreshKey((value) => value + 1)}
+                selectedCloudProvider={cloudTranscriptionProvider}
+                onCloudProviderSelect={(provider) =>
+                  updateTranscriptionSettings({
+                    cloudTranscriptionProvider: provider,
+                    cloudTranscriptionMode: "byok",
+                    transcriptionMode: "providers",
+                  })
                 }
-              }}
-              selectedLocalProvider={localTranscriptionProvider}
-              onLocalProviderSelect={(provider) =>
-                updateTranscriptionSettings({
-                  localTranscriptionProvider: provider as "whisper" | "nvidia" | "qwen",
-                })
-              }
-              useLocalWhisper={useLocalWhisper}
-              onModeChange={(isLocal) => {
-                updateTranscriptionSettings({
-                  useLocalWhisper: isLocal,
-                  transcriptionMode: isLocal ? "local" : "providers",
-                  ...(!isLocal && !isSignedIn ? { cloudTranscriptionMode: "byok" } : {}),
-                });
-              }}
-              cloudTranscriptionBaseUrl={cloudTranscriptionBaseUrl}
-              setCloudTranscriptionBaseUrl={(url) =>
-                updateTranscriptionSettings({ cloudTranscriptionBaseUrl: url })
-              }
-              variant="onboarding"
-            />
+                selectedCloudModel={cloudTranscriptionModel}
+                onCloudModelSelect={(model) =>
+                  updateTranscriptionSettings({ cloudTranscriptionModel: model })
+                }
+                selectedLocalModel={
+                  localTranscriptionProvider === "qwen"
+                    ? qwenModel
+                    : localTranscriptionProvider === "nvidia"
+                      ? parakeetModel
+                      : whisperModel
+                }
+                onLocalModelSelect={(modelId, provider) => {
+                  if (provider === "qwen") {
+                    updateTranscriptionSettings({ qwenModel: modelId });
+                  } else if (provider === "nvidia") {
+                    updateTranscriptionSettings({ parakeetModel: modelId });
+                  } else {
+                    updateTranscriptionSettings({ whisperModel: modelId });
+                  }
+                }}
+                selectedLocalProvider={localTranscriptionProvider}
+                onLocalProviderSelect={(provider) =>
+                  updateTranscriptionSettings({
+                    localTranscriptionProvider: provider as "whisper" | "nvidia" | "qwen",
+                  })
+                }
+                useLocalWhisper={useLocalWhisper}
+                onModeChange={(isLocal) => {
+                  updateTranscriptionSettings({
+                    useLocalWhisper: isLocal,
+                    transcriptionMode: isLocal ? "local" : "providers",
+                    ...(!isLocal ? { cloudTranscriptionMode: "byok" } : {}),
+                  });
+                }}
+                cloudTranscriptionBaseUrl={cloudTranscriptionBaseUrl}
+                setCloudTranscriptionBaseUrl={(url) =>
+                  updateTranscriptionSettings({ cloudTranscriptionBaseUrl: url })
+                }
+                variant="onboarding"
+              />
+            )}
+
+            {isSignedIn && !skipAuth && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground">
+                  {t("onboarding.permissions.title")}
+                </h3>
+                <PermissionsSection
+                  permissions={permissionsHook}
+                  systemAudio={systemAudio}
+                  systemAudioRecommended={onboardingUseCases.includes(USE_CASE_IDS.meetings)}
+                />
+              </div>
+            )}
 
             {/* Language Selection - shown for both modes */}
             <div className="space-y-2 p-3 bg-muted/50 border border-border/60 rounded">
@@ -948,15 +995,20 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     switch (currentStepId) {
       case "welcome":
         return isSignedIn || skipAuth;
+      case "dictationIntro":
+      case "grammarIntro":
       case "usecase":
-        return true; // Selection is optional — Next doubles as skip
+        return true; // These introduction steps can be completed without configuration.
       case "setup":
-        // For signed-in users: Setup step includes permissions
-        if (isSignedIn && !skipAuth) {
-          return areRequiredPermissionsMet(permissionsHook.micPermissionGranted);
-        }
-
-        // For non-signed-in users: Setup - check if configuration is complete
+        if (
+          isSignedIn &&
+          !skipAuth &&
+          !areRequiredPermissionsMet(permissionsHook.micPermissionGranted)
+        )
+          return false;
+        if (isSignedIn && !skipAuth && !useLocalWhisper && cloudTranscriptionMode !== "byok")
+          return true;
+        // Check that the chosen provider or local model is ready.
         if (useLocalWhisper) {
           const modelToCheck =
             localTranscriptionProvider === "qwen"
@@ -1019,7 +1071,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   return (
     <div
-      className="h-screen flex flex-col bg-background"
+      className="h-screen flex flex-col bg-white dark:bg-black"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       <ConfirmDialog
@@ -1071,7 +1123,11 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             actions={isSignedIn ? <SupportDropdown /> : undefined}
             center={
               onboardingPlatform === "darwin" ? (
-                <StepProgress steps={steps.slice(1)} currentStep={currentStep - 1} />
+                <StepProgress
+                  className="max-w-[60vw] overflow-x-auto"
+                  steps={steps.slice(1)}
+                  currentStep={currentStep - 1}
+                />
               ) : undefined
             }
           ></TitleBar>
@@ -1092,16 +1148,37 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         className={`flex-1 px-6 md:px-12 overflow-y-auto ${currentStep === 0 ? "flex items-center" : "py-6"}`}
       >
         <div className={`w-full ${currentStep === 0 ? "max-w-sm" : "max-w-3xl"} mx-auto`}>
-          <Card className="bg-card/90 backdrop-blur-2xl border border-border/50 dark:border-white/5 shadow-lg rounded-xl overflow-hidden">
+          <Card className="bg-white dark:bg-black border border-neutral-200 dark:border-white/10 shadow-none rounded-[30px] overflow-hidden">
             <CardContent className={currentStep === 0 ? "p-6" : "p-6 md:p-8"}>
               {renderStep()}
+              {isFeatureIntro && (
+                <div className="flex items-center justify-between pt-2">
+                  {!(currentStep === 1 && isSignedIn && !skipAuth) ? (
+                    <Button
+                      onClick={prevStep}
+                      variant="ghost"
+                      className="h-9 rounded-full px-4 text-xs text-muted-foreground"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" /> {t("common.back")}
+                    </Button>
+                  ) : (
+                    <div />
+                  )}
+                  <Button
+                    onClick={nextStep}
+                    className="h-9 rounded-full bg-[#2449db] px-6 text-xs text-white hover:bg-[#1e3fc2]"
+                  >
+                    {t("common.next")} <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
 
       {/* Footer Navigation - hidden on welcome/auth step */}
-      {showProgress && (
+      {showProgress && !isFeatureIntro && (
         <div className="shrink-0 bg-background/80 backdrop-blur-2xl border-t border-white/5 px-6 md:px-12 py-3 z-10">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             {/* Hide back button on first step for signed-in users */}

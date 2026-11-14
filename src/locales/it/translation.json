@@ -182,6 +182,24 @@
     "skip": "Salta"
   },
   "onboarding": {
+    "featureIntro": {
+      "welcomeTitle": "Benvenuto in Ducky",
+      "welcomeDescription": "Trasforma la voce in testo e migliora la scrittura con pochi tasti.",
+      "getStarted": "Inizia",
+      "hostedOption": "Ducky Cloud",
+      "providerLocalOption": "Provider o modello locale",
+      "dictationTitle": "Da voce a testo",
+      "dictationDescription": "Parla in un campo di testo. Usa la scorciatoia di dettatura per avviare e fermare; Ducky trasforma la voce in testo.",
+      "dictationExample": "Le tue parole appariranno qui, pronte da inviare.",
+      "dictationShortcut": "Scorciatoia di dettatura",
+      "grammarTitle": "Correzione grammaticale",
+      "grammarDescription": "Seleziona il testo in un campo modificabile e usa la scorciatoia grammaticale per sostituirlo con una versione corretta.",
+      "grammarExample": "Questa frase hanno alcuni errori.",
+      "exampleLabel": "Testo di esempio da selezionare",
+      "grammarShortcut": "Scorciatoia grammaticale",
+      "grammarSetupHint": "Scegli una scorciatoia. Dopo la configurazione, collega il piano ChatGPT in Provider e scegli un modello grammaticale in Impostazioni → Scorciatoie.",
+      "grammarMacOnly": "La correzione grammaticale è attualmente disponibile su macOS."
+    },
     "steps": {
       "welcome": "Benvenuto",
       "setup": "Configurazione",
@@ -2449,6 +2467,12 @@
     "addFirstWord": "Aggiungi la tua prima parola",
     "importList": "Importa un elenco",
     "agentDefault": "Aggiunto di default"
+  },
+  "dictationHistory": {
+    "title": "Dettatura",
+    "description": "Le tue ultime trascrizioni vocali",
+    "empty": "Nessuna dettatura",
+    "emptyHint": "Usa la scorciatoia di dettatura per trascrivere la voce."
   },
   "sidebar": {
     "home": "Home",

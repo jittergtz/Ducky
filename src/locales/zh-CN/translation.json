@@ -182,6 +182,24 @@
     "skip": "跳过"
   },
   "onboarding": {
+    "featureIntro": {
+      "welcomeTitle": "欢迎使用 Ducky",
+      "welcomeDescription": "将语音转为文字，轻按快捷键即可润色内容。",
+      "getStarted": "开始使用",
+      "hostedOption": "Ducky Cloud",
+      "providerLocalOption": "提供商或本地模型",
+      "dictationTitle": "语音转文字",
+      "dictationDescription": "在任意文本框中讲话。使用听写快捷键开始和停止，Ducky 会将语音转换为文字。",
+      "dictationExample": "你说的话会显示在这里，随时可以发送。",
+      "dictationShortcut": "听写快捷键",
+      "grammarTitle": "语法纠正",
+      "grammarDescription": "在可编辑的文本框中选中文字，使用语法快捷键将其替换为修正后的版本。",
+      "grammarExample": "这是一句需要修改的例句。",
+      "exampleLabel": "可选择的示例文本",
+      "grammarShortcut": "语法快捷键",
+      "grammarSetupHint": "先选择快捷键。完成设置后，在提供商中连接 ChatGPT 计划，然后在设置 → 快捷键中选择语法模型。",
+      "grammarMacOnly": "语法纠正目前可在 macOS 上使用。"
+    },
     "steps": {
       "welcome": "欢迎",
       "setup": "设置",
@@ -2444,6 +2462,12 @@
     "addFirstWord": "添加第一个词",
     "importList": "导入列表",
     "agentDefault": "默认添加"
+  },
+  "dictationHistory": {
+    "title": "语音输入",
+    "description": "最近的语音转文字记录",
+    "empty": "暂无语音输入记录",
+    "emptyHint": "使用语音输入快捷键将语音转为文字。"
   },
   "sidebar": {
     "home": "首页",

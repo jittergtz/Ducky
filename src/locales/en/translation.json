@@ -268,6 +268,24 @@
     "skip": "Skip"
   },
   "onboarding": {
+    "featureIntro": {
+      "welcomeTitle": "Welcome to Ducky",
+      "welcomeDescription": "Turn your voice into text and polish your writing in a few keystrokes.",
+      "getStarted": "Get started",
+      "hostedOption": "Ducky Cloud",
+      "providerLocalOption": "Provider or local model",
+      "dictationTitle": "Speech to text",
+      "dictationDescription": "Speak naturally in any text field. Use your dictation shortcut to start and stop; Ducky turns your voice into text.",
+      "dictationExample": "Your words appear here, ready to send.",
+      "dictationShortcut": "Dictation shortcut",
+      "grammarTitle": "Grammar Correction",
+      "grammarDescription": "Select text in an editable field and use your grammar shortcut to replace it with a corrected version.",
+      "grammarExample": "This sentence have a few mistake.",
+      "exampleLabel": "Example text to select",
+      "grammarShortcut": "Grammar shortcut",
+      "grammarSetupHint": "Choose a shortcut now. After setup, connect your ChatGPT plan in Providers, then choose a grammar model in Settings → Hotkeys.",
+      "grammarMacOnly": "Grammar correction is currently available on macOS."
+    },
     "steps": {
       "welcome": "Welcome",
       "setup": "Setup",
@@ -2221,6 +2239,12 @@
         "liquidai_lfm2_5_230m_q8_0": "Tiny model, instant cleanup on modest hardware"
       }
     }
+  },
+  "dictationHistory": {
+    "title": "Dictation",
+    "description": "Your latest speech-to-text transcriptions",
+    "empty": "No dictations yet",
+    "emptyHint": "Use your dictation shortcut to transcribe speech."
   },
   "sidebar": {
     "home": "Home",

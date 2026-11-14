@@ -67,19 +67,13 @@ export function LocalModelCard({
         }
       }}
       className={`relative w-full text-left overflow-hidden rounded-md border transition-colors duration-200 group ${
-        isSelected ? cardStyles.modelCard.selected : cardStyles.modelCard.default
+        cardStyles.modelCard.default
       } ${isDownloaded && !isSelected ? "cursor-pointer" : ""}`}
     >
       <div className="flex items-center gap-1.5 p-2">
         <div className="shrink-0">
           {isDownloaded ? (
-            <div
-              className={`w-1.5 h-1.5 rounded-full ${
-                isSelected
-                  ? "bg-primary shadow-[0_0_6px_oklch(0.62_0_0/0.6)] animate-[pulse-glow_2s_ease-in-out_infinite]"
-                  : "bg-success shadow-[0_0_4px_rgba(255,255,255,0.3)]"
-              }`}
-            />
+            <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_4px_rgba(255,255,255,0.3)]" />
           ) : isDownloading ? (
             <div className="w-1.5 h-1.5 rounded-full bg-neutral-500 shadow-[0_0_4px_rgba(255,255,255,0.3)] animate-[spinner-rotate_1s_linear_infinite]" />
           ) : (
@@ -109,7 +103,7 @@ export function LocalModelCard({
           {isDownloaded ? (
             <>
               {isSelected && (
-                <span className="text-xs font-medium text-primary px-2 py-0.5 bg-primary/10 rounded-sm">
+                <span className="rounded-full bg-[#2449db] px-2.5 py-1 text-xs font-medium text-white">
                   {t("common.active")}
                 </span>
               )}

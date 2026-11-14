@@ -182,6 +182,24 @@
     "skip": "スキップ"
   },
   "onboarding": {
+    "featureIntro": {
+      "welcomeTitle": "Duckyへようこそ",
+      "welcomeDescription": "音声をテキストに変換し、簡単なキー操作で文章を整えます。",
+      "getStarted": "始める",
+      "hostedOption": "Ducky Cloud",
+      "providerLocalOption": "プロバイダーまたはローカルモデル",
+      "dictationTitle": "音声をテキストに",
+      "dictationDescription": "テキスト欄で話してください。音声入力のショートカットで開始・停止すると、Duckyが音声をテキストに変換します。",
+      "dictationExample": "話した言葉がここに表示されます。",
+      "dictationShortcut": "音声入力のショートカット",
+      "grammarTitle": "文法の修正",
+      "grammarDescription": "編集できる欄でテキストを選択し、文法修正のショートカットで修正後の文章に置き換えます。",
+      "grammarExample": "これは文法を修正する例文です。",
+      "exampleLabel": "選択する例文",
+      "grammarShortcut": "文法修正のショートカット",
+      "grammarSetupHint": "ショートカットを選んでください。設定後、プロバイダーでChatGPTプランを接続し、設定のショートカットで文法モデルを選択してください。",
+      "grammarMacOnly": "文法修正は現在macOSで利用できます。"
+    },
     "steps": {
       "welcome": "ようこそ",
       "setup": "セットアップ",
@@ -2449,6 +2467,12 @@
       "stop": "停止",
       "playSignal": "シグナルを再生"
     }
+  },
+  "dictationHistory": {
+    "title": "音声入力",
+    "description": "最近の音声の文字起こし",
+    "empty": "音声入力はまだありません",
+    "emptyHint": "音声入力のショートカットで音声を文字に変換します。"
   },
   "sidebar": {
     "home": "ホーム",

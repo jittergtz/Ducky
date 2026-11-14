@@ -12,6 +12,7 @@ import {
   Search,
   Sparkles,
   ExternalLink,
+  FileText,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import {
@@ -82,7 +83,7 @@ import NotesOnboarding from "./NotesOnboarding";
 import { isRegenerableNoteTitle } from "../../helpers/regenerableNoteTitle";
 
 const FOLDER_INPUT_CLASS =
-  "w-full h-6 bg-foreground/5 dark:bg-white/5 rounded px-2 text-xs text-foreground outline-none border border-primary/30 focus:border-primary/50";
+  "w-full h-10 bg-foreground/5 dark:bg-white/5 rounded-xl px-3 text-sm text-foreground outline-none border border-primary/30 focus:border-primary/50";
 
 function makeContentHash(content: string): string {
   return String(content.length) + "-" + content.slice(0, 50);
@@ -571,54 +572,59 @@ export default function PersonalNotesView({
       <div
         inert={isSidePanelLayout}
         aria-hidden={isSidePanelLayout}
-        className="shrink-0 min-h-0 overflow-hidden transition-[width] duration-200 ease-out"
-        style={{ width: isSidePanelLayout ? 0 : isNarrowWindow ? "100%" : "15rem" }}
+        className="h-full shrink-0 min-h-0 overflow-x-hidden overflow-y-auto transition-[width] duration-200 ease-out"
+        style={{ width: isSidePanelLayout ? 0 : isNarrowWindow ? "100%" : "17rem" }}
       >
-        <div className="w-full min-w-52 border-r border-border-subtle bg-surface-1 flex flex-col h-full min-h-0">
-          <div className="px-2 pt-2 pb-1 shrink-0 space-y-0.5">
+        <div
+          className={cn(
+            "mx-auto flex min-h-full w-full min-w-52 flex-col bg-background",
+            isNarrowWindow ? "max-w-xl" : "border-r border-border-subtle"
+          )}
+        >
+          <div className="flex shrink-0 flex-wrap gap-1 px-3 pt-3 pb-2">
             <button
               onClick={handleOpenNewNoteDialog}
               className={cn(
-                "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs",
-                "text-muted-foreground/80 hover:text-foreground hover:bg-foreground/5",
+                "flex min-w-fit flex-1 items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium",
+                "text-muted-foreground hover:text-foreground hover:bg-foreground/5",
                 "transition-colors duration-150",
                 "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               )}
             >
-              <SquarePen size={14} className="shrink-0" />
+              <SquarePen size={17} className="shrink-0" />
               {t("notes.sidebar.newNote")}
             </button>
             {onOpenSearch && (
               <button
                 onClick={onOpenSearch}
                 className={cn(
-                  "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs",
-                  "text-muted-foreground/80 hover:text-foreground hover:bg-foreground/5",
+                  "flex min-w-fit flex-1 items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium",
+                  "text-muted-foreground hover:text-foreground hover:bg-foreground/5",
                   "transition-colors duration-150",
                   "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
                 )}
               >
-                <Search size={14} className="shrink-0" />
+                <Search size={17} className="shrink-0" />
                 {t("notes.sidebar.searchNotes")}
               </button>
             )}
             <button
               onClick={() => setShowActionManager(true)}
               className={cn(
-                "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs",
-                "text-muted-foreground/80 hover:text-foreground hover:bg-foreground/5",
+                "flex min-w-fit flex-1 items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium",
+                "text-muted-foreground hover:text-foreground hover:bg-foreground/5",
                 "transition-colors duration-150",
                 "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               )}
             >
-              <Sparkles size={14} className="shrink-0" />
+              <Sparkles size={17} className="shrink-0" />
               {t("notes.sidebar.actions")}
             </button>
           </div>
 
           {/* Folders */}
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center justify-between px-5 py-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("notes.folders.title")}
             </span>
             <Button
@@ -626,13 +632,13 @@ export default function PersonalNotesView({
               size="icon"
               onClick={() => setIsCreatingFolder(true)}
               aria-label={t("notes.context.newFolder")}
-              className="h-5 w-5 rounded-md text-muted-foreground hover:text-foreground/60 hover:bg-foreground/5"
+              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-foreground/5"
             >
-              <Plus size={13} />
+              <Plus size={17} />
             </Button>
           </div>
 
-          <div className="px-1.5 space-y-px">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-1 px-3">
             {folders.map((folder) => {
               const isActive = folder.id === activeFolderId;
               const isMeetings = folder.name === MEETINGS_FOLDER_NAME;
@@ -669,10 +675,10 @@ export default function PersonalNotesView({
                   onClick={() => setActiveFolderId(folder.id)}
                   {...folderDropHandlers(folder.id, folder.name)}
                   className={cn(
-                    "group relative flex items-center gap-2 w-full h-7 px-2 rounded-md cursor-pointer text-left transition-all duration-150",
+                    "group relative flex items-center gap-3 w-full h-10 px-3 rounded-xl cursor-pointer text-left transition-all duration-150",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
                     isActive
-                      ? "bg-primary/8 dark:bg-primary/10"
+                      ? "bg-foreground/8 dark:bg-white/8"
                       : "hover:bg-foreground/4 dark:hover:bg-white/4",
                     isDragOver &&
                       !isMeetings &&
@@ -682,20 +688,20 @@ export default function PersonalNotesView({
                   )}
                 >
                   <FolderOpen
-                    size={13}
+                    size={17}
                     className={cn(
                       "shrink-0 transition-colors duration-150",
                       isDragOver || isActive
-                        ? "text-primary"
+                        ? "text-foreground"
                         : "text-muted-foreground group-hover:text-foreground"
                     )}
                   />
                   <span
                     className={cn(
-                      "text-xs truncate flex-1 transition-colors duration-150",
+                      "text-sm truncate flex-1 transition-colors duration-150",
                       isDragOver || isActive
                         ? "text-foreground font-medium"
-                        : "text-foreground/50 group-hover:text-foreground/70"
+                        : "text-muted-foreground group-hover:text-foreground"
                     )}
                   >
                     {folder.name}
@@ -723,9 +729,9 @@ export default function PersonalNotesView({
                           role="button"
                           tabIndex={-1}
                           onClick={(e) => e.stopPropagation()}
-                          className="h-4 w-4 flex items-center justify-center rounded-sm opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity absolute right-1.5 text-foreground/25 hover:text-foreground/50 cursor-pointer"
+                          className="h-7 w-7 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity absolute right-2 text-muted-foreground hover:text-foreground cursor-pointer"
                         >
-                          <MoreHorizontal size={11} />
+                          <MoreHorizontal size={16} />
                         </span>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" sideOffset={4} className="min-w-32">
@@ -796,11 +802,11 @@ export default function PersonalNotesView({
             )}
           </div>
 
-          <div className="mx-3 h-px bg-border/10 dark:bg-white/4 my-2" />
+          <div className="mx-5 my-2 h-px bg-border/30 dark:bg-white/8" />
 
           {/* Notes list */}
-          <div className="flex items-center justify-between px-3 py-1">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center justify-between px-5 pb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("notes.list.title")}
             </span>
             <Button
@@ -808,89 +814,36 @@ export default function PersonalNotesView({
               size="icon"
               onClick={handleNewNote}
               aria-label={t("notes.list.newNote")}
-              className="h-5 w-5 rounded-md text-muted-foreground hover:text-foreground/60 hover:bg-foreground/5"
+              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-foreground/5"
             >
-              <Plus size={13} />
+              <Plus size={17} />
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 size={12} className="animate-spin text-foreground/15" />
               </div>
             ) : notes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 px-4">
-                <svg
-                  className="text-foreground dark:text-white mb-3"
-                  width="40"
-                  height="36"
-                  viewBox="0 0 40 36"
-                  fill="none"
-                >
-                  <rect
-                    x="12"
-                    y="1"
-                    width="20"
-                    height="26"
-                    rx="2"
-                    transform="rotate(5 22 14)"
-                    fill="currentColor"
-                    fillOpacity={0.025}
-                    stroke="currentColor"
-                    strokeOpacity={0.06}
-                  />
-                  <rect
-                    x="8"
-                    y="3"
-                    width="20"
-                    height="26"
-                    rx="2"
-                    fill="currentColor"
-                    fillOpacity={0.04}
-                    stroke="currentColor"
-                    strokeOpacity={0.08}
-                  />
-                  <rect
-                    x="12"
-                    y="9"
-                    width="10"
-                    height="1.5"
-                    rx="0.75"
-                    fill="currentColor"
-                    fillOpacity={0.07}
-                  />
-                  <rect
-                    x="12"
-                    y="13"
-                    width="12"
-                    height="1.5"
-                    rx="0.75"
-                    fill="currentColor"
-                    fillOpacity={0.05}
-                  />
-                  <rect
-                    x="12"
-                    y="17"
-                    width="8"
-                    height="1.5"
-                    rx="0.75"
-                    fill="currentColor"
-                    fillOpacity={0.04}
-                  />
-                </svg>
-                <p className="text-xs text-muted-foreground mb-3">{t("notes.empty.emptyFolder")}</p>
-                <div className="flex flex-col gap-1.5 w-full max-w-36">
+              <div className="flex flex-col items-center justify-center px-5 py-4 text-center">
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-foreground/5 text-muted-foreground">
+                  <FileText size={20} strokeWidth={1.5} />
+                </div>
+                <p className="mb-3 text-sm font-medium text-muted-foreground">
+                  {t("notes.empty.emptyFolder")}
+                </p>
+                <div className="flex w-full max-w-sm flex-wrap justify-center gap-2">
                   <button
                     onClick={handleNewNote}
-                    className="flex items-center justify-center gap-1.5 h-6 rounded-full bg-primary/8 dark:bg-primary/10 border border-primary/12 dark:border-primary/15 text-xs font-medium text-primary/70 hover:bg-primary/12 hover:text-primary hover:border-primary/20 transition-colors"
+                    className="flex h-10 min-w-fit flex-1 items-center justify-center gap-2 rounded-full bg-[#2449db] px-4 text-sm font-medium text-white transition-colors hover:bg-[#1e3fc2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Plus size={10} />
+                    <Plus size={16} />
                     {t("notes.empty.createNote")}
                   </button>
                   <button
                     onClick={() => setShowAddNotesDialog(true)}
-                    className="flex items-center justify-center gap-1.5 h-6 rounded-full border border-foreground/8 dark:border-white/8 text-xs text-foreground/40 hover:text-foreground/60 hover:border-foreground/15 hover:bg-foreground/3 dark:hover:bg-white/3 transition-colors"
+                    className="flex h-10 min-w-fit flex-1 items-center justify-center rounded-full bg-foreground/5 px-4 text-sm font-medium text-foreground transition-colors hover:bg-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {t("notes.addToFolder.addExisting")}
                   </button>
